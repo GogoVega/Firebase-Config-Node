@@ -14,7 +14,13 @@
  * limitations under the License.
  */
 
-//TODO: Fix the default exportation
-module.exports = require("./nodes/firebase-config").default;
-export { default } from "./nodes/firebase-config";
-export * from "./lib/types";
+import { NodeStatus } from "node-red";
+import { Status } from "../types";
+
+export const nodeStatus: Record<Exclude<Status, "error">, NodeStatus> = {
+	connected: { fill: "green", shape: "dot", text: "Connected" },
+	connecting: { fill: "yellow", shape: "ring", text: "Connecting" },
+	disconnected: { fill: "red", shape: "dot", text: "Disconnected" },
+	"no-network": { fill: "red", shape: "ring", text: "No Network" },
+	"re-connecting": { fill: "yellow", shape: "ring", text: "Reconnecting" },
+};

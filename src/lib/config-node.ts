@@ -14,10 +14,26 @@
  * limitations under the License.
  */
 
-import { NodeAPI } from "node-red";
-import { Client, FirebaseError, isFirebaseError, LogCallbackParams, onLog, RTDB, SignState } from "@gogovega/firebase-nodejs";
-import { firebaseError } from "./const";
-import { ConfigType, JSONContentType, NodeType, ServiceAccount } from "./types";
+import { NodeAPI, NodeStatus } from "node-red";
+import {
+	Client,
+	FirebaseError,
+	isFirebaseError,
+	LogCallbackParams,
+	onLog,
+	RTDB,
+	SignState,
+} from "@gogovega/firebase-nodejs";
+import { firebaseError, nodeStatus } from "./const";
+import {
+	ConfigType,
+	JSONContentType,
+	NodeType,
+	ServiceAccount,
+	Status,
+	StatusListener,
+	StatusListeners,
+} from "./types";
 
 /**
  * Firebase Class
@@ -35,23 +51,46 @@ import { ConfigType, JSONContentType, NodeType, ServiceAccount } from "./types";
  * @param node The `config-node` to associate with this class
  * @returns A FirebaseConfig Class
  */
-export class FirebaseConfig {
-	constructor(private node: NodeType, config: ConfigType, RED: NodeAPI) {
+export class FirebaseClient {
+	private statusListeners: StatusListeners;
+
+	constructor(
+		private node: NodeType,
+		config: ConfigType,
+		private RED: NodeAPI
+	) {
 		node.config = config;
-		node.RED = RED;
-		node.registeredNodes = { firestore: [], rtdb: [], storage: [] };
+		node.globalStatus = nodeStatus.disconnected;
+		node.addStatusListener = this.addStatusListener.bind(this);
 		node.clientSignedIn = this.clientSignedIn.bind(this);
-		node.getRTDB = this.getRTDB.bind(this);
-		node.destroyUnusedConnection = this.destroyUnusedConnection.bind(this);
-		node.restoreDestroyedConnection = this.restoreDestroyedConnection.bind(this);
+		node.removeStatusListener = this.removeStatusListener.bind(this);
+		this.statusListeners = { firestore: [], rtdb: [], storage: [] };
 		this.initLogging();
 	}
 
-	/**
-	 * This property contains the identifier of the timer used to check if the config-node is unused
-	 * and will be used to clear the timeout in case at least one node is linked to this database.
-	 */
-	private destructionTimeouID?: ReturnType<typeof setTimeout>;
+	private addStatusListener(id: string, type: StatusListener) {
+		this.statusListeners[type].push(id);
+		this.setCurrentStatus(id);
+		this.restoreDestroyedConnection();
+		type === "rtdb" && this.getRTDB();
+	}
+
+	private removeStatusListener(id: string, type: StatusListener, removed: boolean, done: (error?: unknown) => void) {
+		try {
+			const nodes = this.statusListeners[type];
+
+			nodes.forEach((nodeID) => {
+				if (nodeID !== id) return;
+				nodes.splice(nodes.indexOf(id), 1);
+			});
+
+			this.destroyUnusedConnection(removed);
+
+			done();
+		} catch (error) {
+			done(error);
+		}
+	}
 
 	private clientSignedIn(): Promise<boolean> {
 		return new Promise((resolve, reject) => {
@@ -78,19 +117,20 @@ export class FirebaseConfig {
 	 * If `true`, execute the callback after 15s otherwise skip it.
 	 */
 	private destroyUnusedConnection(removed: boolean) {
-		const { rtdb } = this.node.registeredNodes;
+		const { name } = this.node.config;
+		const { rtdb, firestore } = this.statusListeners;
 
-		if (!removed || rtdb.length > 0) return;
+		// TODO: vérifier si utile
+		if (!removed) return;
 
-		this.destructionTimeouID = setTimeout(() => {
-			if (rtdb.length === 0 && this.node.rtdb) {
-				this.node.warn(
-					`WARNING: '${this.node.config.name}' config node is unused! The connection with Firebase RTDB will be closed.`
-				);
-				this.node.rtdb.goOffline();
-				this.node.log("Connection with Firebase RTDB was closed because no node used.")
-			}
-		}, 15000);
+		if (!rtdb.length && !firestore.length)
+			this.node.warn(`WARNING: '${name}' config node is unused! Connections with Firebase will be closed...`);
+
+		// TODO: Add firestore
+		if (rtdb.length === 0 && this.node.rtdb) {
+			this.node.rtdb.goOffline();
+			this.node.log("Connection with Firebase RTDB was closed because no node used.");
+		}
 	}
 
 	private getClaims() {
@@ -112,13 +152,13 @@ export class FirebaseConfig {
 
 		if (Object.keys(content).length === 0) {
 			const { credentials } = this.node;
-			const projectId = this.node.credentials.url
+			const projectId = credentials.url
 				?.split("https://")
 				.pop()
 				?.split(/-default-rtdb\.((asia-southeast1|europe-west1)\.firebasedatabase\.app|firebaseio\.com)(\/)?$/)[0];
 
 			// For line breaks issue
-			const privateKey = JSON.stringify(this.node.credentials.privateKey)
+			const privateKey = JSON.stringify(credentials.privateKey)
 				?.replace(/\\\\n/gm, "\n")
 				.replaceAll('"', "")
 				.replaceAll("\\", "");
@@ -146,18 +186,13 @@ export class FirebaseConfig {
 		if (!this.node.client?.clientInitialised) return;
 
 		this.node.rtdb = new RTDB(this.node.client);
-		this.initConnectionState();
+		this.subscribeConnectionState();
 	}
 
-	private initConnectionState() {
-		const { rtdb } = this.node.registeredNodes;
+	private subscribeConnectionState() {
+		if (!this.node.rtdb) return;
 
-		this.node.rtdb && this.node.rtdb
-			.on("connecting", () => this.setNodesConnecting(rtdb))
-			.on("connected", () => this.setNodesConnected(rtdb))
-			.on("disconnected", () => this.setNodesDisconnected(rtdb))
-			.on("re-connecting", () => this.setNodesReconnecting(rtdb))
-			.on("log", (msg) => this.node.log(msg));
+		this.node.rtdb.on("log", (msg) => this.node.log(msg)).onStatusUpdate = (status) => this.updateGlobalStatus(status);
 	}
 
 	/**
@@ -167,57 +202,58 @@ export class FirebaseConfig {
 	private initLogging() {
 		// Works for both databases
 		// Known Issue: how to know which module returned the log?
-		if (!this.node.RED.events.eventNames().includes("Firebase:log"))
-			onLog((log) => this.node.RED.events.emit("Firebase:log", log), { level: "warn" });
+		if (!this.RED.events.eventNames().includes("Firebase:log"))
+			onLog((log) => this.RED.events.emit("Firebase:log", log), { level: "warn" });
 
-		this.node.RED.events.on("Firebase:log", this.onLog);
+		this.RED.events.on("Firebase:log", this.onLog);
 	}
 
 	/**
 	 * Connects to Firebase with the authentication method defined in the `config-node`.
 	 */
-	public logIn() {
-		(async () => {
-			try {
-				// Initialize App
-				this.node.client = new Client({
+	public async logIn() {
+		try {
+			// Initialize App
+			this.node.client = new Client(
+				{
 					apiKey: this.node.credentials.apiKey,
 					databaseURL: this.node.credentials.url,
 					projectId: this.node.credentials.projectId,
 					// storageBucket: this.node.credentials.storageBucket,
-				}, this.node.id);
+				},
+				this.node.id
+			);
 
-				// Initialize Client Logging
-				this.node.client.on("warn", (msg) => this.node.warn(msg));
+			// Initialize Client Logging
+			this.node.client.on("warn", (msg) => this.node.warn(msg));
 
-				// Log In
-				switch (this.node.config.authType) {
-					case "anonymous":
-						await this.node.client.signInAnonymously();
-						break;
-					case "email": {
-						const { email, password } = this.node.credentials;
-						const createUser = this.node.config.createUser;
-						await this.node.client.signInWithEmailAndPassword(email, password, createUser);
-						break;
-					}
-					case "privateKey": {
-						const { clientEmail, privateKey, projectId } = this.getJSONCredentials();
-						this.node.client.signInWithPrivateKey(projectId, clientEmail, privateKey);
-						break;
-					}
-					case "customToken": {
-						const claims = this.getClaims();
-						const cred = this.getJSONCredentials();
-						const uid  = this.node.credentials.uid;
-						await this.node.client.signInWithCustomToken(cred, uid, claims);
-						break;
-					}
+			// Log In
+			switch (this.node.config.authType) {
+				case "anonymous":
+					await this.node.client.signInAnonymously();
+					break;
+				case "email": {
+					const { email, password } = this.node.credentials;
+					const createUser = this.node.config.createUser;
+					await this.node.client.signInWithEmailAndPassword(email, password, createUser);
+					break;
 				}
-			} catch (error) {
-				this.onError(error as Error);
+				case "privateKey": {
+					const { clientEmail, privateKey, projectId } = this.getJSONCredentials();
+					this.node.client.signInWithPrivateKey(projectId, clientEmail, privateKey);
+					break;
+				}
+				case "customToken": {
+					const claims = this.getClaims();
+					const cred = this.getJSONCredentials();
+					const uid = this.node.credentials.uid;
+					await this.node.client.signInWithCustomToken(cred, uid, claims);
+					break;
+				}
 			}
-		})();
+		} catch (error) {
+			this.onError(error as Error);
+		}
 	}
 
 	/**
@@ -227,11 +263,11 @@ export class FirebaseConfig {
 	public logOut() {
 		if (!this.node.client?.clientInitialised) return Promise.resolve();
 
-		// If Node-RED is restarted, stop the timeout (avoid goOffline after logout request)
-		clearTimeout(this.destructionTimeouID);
-		this.node.rtdb && !this.node.rtdb.offline && this.node.log(`Closing connection with Firebase RTDB: ${this.node.client.app?.options.databaseURL}`);
+		this.node.rtdb &&
+			!this.node.rtdb.offline &&
+			this.node.log(`Closing connection with Firebase RTDB: ${this.node.client.app?.options.databaseURL}`);
 
-		this.node.RED.events.removeListener("Firebase:log", this.onLog);
+		this.RED.events.removeListener("Firebase:log", this.onLog);
 
 		return this.node.client.signOut();
 	}
@@ -249,14 +285,17 @@ export class FirebaseConfig {
 			msg = firebaseError[error.code.split(".")[0]];
 			// Not working for firebase-admin... (hack working with log)
 			if (error.code.match(/auth\/network-request-failed/)) {
-				this.setNodesNoNetwork();
+				this.updateGlobalStatus("no-network");
 			} else if (error.code.startsWith("auth/")) {
-				this.setNodesError(error.code.split("auth/").pop()?.split(".")[0].replace(/-/gm, " ").toPascalCase());
+				this.updateGlobalStatus(
+					"error",
+					error.code.split("auth/").pop()?.split(".")[0].replace(/-/gm, " ").toPascalCase()
+				);
 			} else {
-				this.setNodesError();
+				this.updateGlobalStatus("error");
 			}
 		} else {
-			this.setNodesError();
+			this.updateGlobalStatus("error");
 		}
 
 		msg = msg || error.message || error.toString();
@@ -291,77 +330,26 @@ export class FirebaseConfig {
 	 * @remarks This method should only be used if the connection has been destroyed.
 	 */
 	private restoreDestroyedConnection() {
-		const { rtdb } = this.node.registeredNodes;
-		if (rtdb.length > 1) return;
-
-		// If a node is started, stop the timeout
-		clearTimeout(this.destructionTimeouID);
-		this.destructionTimeouID = undefined;
-
-		// Skip if Node-RED re-starts
-		if (this.node.rtdb?.offline !== true) return;
-
-		rtdb.length && this.node.rtdb?.goOnline();
+		// TODO: Add firestore
+		if (this.node.rtdb?.offline) this.node.rtdb?.goOnline();
 	}
 
-	/**
-	 * Sets for each node defined in the array the status as "Connected".
-	 * @param nodeIdArray An array containing node ids
-	 */
-	public setNodesConnected(nodeIdArray: string[]) {
-		for (const nodeId of nodeIdArray) {
-			this.node.RED.nodes.getNode(nodeId).status({ fill: "green", shape: "dot", text: "Connected" });
-		}
+	private setCurrentStatus(id: string) {
+		this.RED.nodes.getNode(id).status(this.node.globalStatus);
 	}
 
-	/**
-	 * Sets for each node defined in the array the status as `Connecting`.
-	 * @param nodeIdArray An array containing node ids
-	 */
-	public setNodesConnecting(nodeIdArray: string[]) {
-		for (const nodeId of nodeIdArray) {
-			this.node.RED.nodes.getNode(nodeId).status({ fill: "yellow", shape: "ring", text: "Connecting" });
-		}
-	}
+	private updateGlobalStatus(status: Status, text?: string) {
+		const statusObject: NodeStatus =
+			status === "error"
+				? { fill: "red", shape: "dot", text: `Error${text ? ": ".concat(text) : ""}` }
+				: nodeStatus[status];
 
-	/**
-	 * Sets for each node defined in the array the status as `Disconnected`.
-	 * @param nodeIdArray An array containing node ids
-	 */
-	public setNodesDisconnected(nodeIdArray: string[]) {
-		if (this.node.client?.signState === SignState.ERROR) return;
+		// Save the status
+		this.node.globalStatus = statusObject;
 
-		for (const nodeId of nodeIdArray) {
-			this.node.RED.nodes.getNode(nodeId).status({ fill: "red", shape: "dot", text: "Disconnected" });
-		}
-	}
-
-	/**
-	 * Sets the status of nodes linked to this client as `Error`. An error code can also be set.
-	 * @param code The error code to add to the status
-	 */
-	public setNodesError(code?: string) {
-		for (const nodesArray of Object.values(this.node.registeredNodes) as Array<Array<string>>) {
-			nodesArray.forEach((id) => this.node.RED.nodes.getNode(id).status({ fill: "red", shape: "dot", text: `Error${code ? ": ".concat(code) : ""}` }));
-		}
-	}
-
-	/**
-	 * Sets the status of nodes linked to this client as `No Network`.
-	 */
-	public setNodesNoNetwork() {
-		for (const nodesArray of Object.values(this.node.registeredNodes) as Array<Array<string>>) {
-			nodesArray.forEach((id) => this.node.RED.nodes.getNode(id).status({ fill: "red", shape: "ring", text: "No Network" }));
-		}
-	}
-
-	/**
-	 * Sets for each node defined in the array the status as `Reconnecting`.
-	 * @param nodeIdArray An array containing node ids
-	 */
-	public setNodesReconnecting(nodeIdArray: string[]) {
-		for (const nodeId of nodeIdArray) {
-			this.node.RED.nodes.getNode(nodeId).status({ fill: "yellow", shape: "ring", text: "Reconnecting" });
+		// TODO: Status pour firestore
+		for (const listeners of Object.values(this.statusListeners) as Array<Array<string>>) {
+			listeners.forEach((id) => this.RED.nodes.getNode(id).status(statusObject));
 		}
 	}
 }

@@ -97,7 +97,7 @@
 				password: { type: "password", validate: RED.validators.regex(/^.+$/) },
 				privateKey: { type: "password", validate: RED.validators.regex(/^__PWRD__$|-----BEGIN PRIVATE KEY-----\S+-----END PRIVATE KEY-----/) },
 				projectId: { type: "text", validate: RED.validators.regex(/^$|^[a-zA-Z0-9-]{4,30}$/) },
-				storageBucket: { type: "text", validate: RED.validators.regex(/^$|^[a-zA-Z0-9-]{4,30}.appspot.com$/) },
+				storageBucket: { type: "text", validate: RED.validators.regex(/^$|^[a-zA-Z0-9-]{4,30}\.appspot\.com$/) },
 				uid: { type: "text", validate: RED.validators.regex(/^.{1,128}$/) },
 				url: { type: "text", validate: RED.validators.regex(/^$|^https:\/\/[a-zA-Z0-9-]{4,30}-default-rtdb\.((asia-southeast1|europe-west1)\.firebasedatabase\.app|firebaseio\.com)\/$/) },
 			},

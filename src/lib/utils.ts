@@ -28,4 +28,4 @@ String.prototype.toPascalCase = function () {
 	return words.map((word) => word.charAt(0).toUpperCase() + word.substring(1).toLowerCase()).join(" ");
 };
 
-export { };
+export {};

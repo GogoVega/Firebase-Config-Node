@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Node, NodeAPI } from "node-red";
+import { Node, NodeStatus } from "node-red";
 import { ConfigType } from "./ConfigType";
 import { Client, RTDB } from "@gogovega/firebase-nodejs";
 
@@ -29,6 +29,16 @@ export interface ServiceAccount {
 	privateKey: string;
 	projectId: string;
 }
+
+export interface StatusListeners {
+	firestore: Array<string>;
+	rtdb: Array<string>;
+	storage: Array<string>;
+}
+
+export type StatusListener = keyof StatusListeners;
+
+export type Status = "connected" | "connecting" | "disconnected" | "error" | "no-network" | "re-connecting";
 
 type Credentials = {
 	apiKey: string;
@@ -48,38 +58,13 @@ type Credentials = {
 	url: string;
 };
 
-interface RegisteredNodes {
-	firestore: Array<string>;
-	rtdb: Array<string>;
-	storage: Array<string>;
-}
-
 export type NodeType = Node & {
+	addStatusListener(id: string, type: StatusListener): void;
 	client?: Client;
 	clientSignedIn(): Promise<boolean>;
 	config: ConfigType;
 	credentials: Credentials;
-
-	/**
-	 * Creates and initializes a callback to verify that the config node is in use.
-	 * Otherwise the connection with Firebase will be closed.
-	 * @note Use of a timer is essential because it's necessary to allow time for all nodes to start before checking
-	 * the number of nodes connected to this database.
-	 * @param removed A flag that indicates whether the node is being closed because it has been removed entirely,
-	 * or that it is just being restarted.
-	 * If `true`, execute the callback after 15s otherwise skip it.
-	 */
-	destroyUnusedConnection(removed: boolean): void;
-	getFirestore(): void;
-	getRTDB(): void;
-	getStorage(): void;
-	RED: NodeAPI;
-	registeredNodes: RegisteredNodes;
+	globalStatus: NodeStatus;
+	removeStatusListener(id: string, type: StatusListener, removed: boolean, done: () => void): void;
 	rtdb?: RTDB;
-
-	/**
-	 * Restores the connection with Firebase if at least one node is activated.
-	 * @remarks This method should only be used if the connection has been destroyed.
-	 */
-	restoreDestroyedConnection(): void;
 };

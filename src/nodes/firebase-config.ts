@@ -15,24 +15,29 @@
  */
 
 import { NodeAPI } from "node-red";
-import { FirebaseConfig } from "../lib/firebaseNode";
+import { FirebaseClient } from "../lib/config-node";
 import { ConfigType, NodeType } from "../lib/types";
 
 export default function (RED: NodeAPI) {
+	/**
+	 * Firebase Configuration Node
+	 *
+	 * This Global Configuration Node is used by all other Firebase Nodes to access the Firebase RTDB,
+	 * Firestore and Cloud Storage.
+	 *
+	 * It keeps track of incoming status messages and updates listening nodes' status in the UI accordingly.
+	 *
+	 * @param this The Firebase Config Node
+	 * @param config Configuration associated with this Config Node
+	 */
 	function FirebaseConfigNode(this: NodeType, config: ConfigType) {
 		RED.nodes.createNode(this, config);
-		const self = this;
 
-		const firebase = new FirebaseConfig(self, config, RED);
+		const client = new FirebaseClient(this, config, RED);
 
-		firebase.logIn();
+		client.logIn();
 
-		self.on("close", (done: (error?: Error) => void) =>
-			firebase
-				.logOut()
-				.then(() => done())
-				.catch((error: Error) => done(error))
-		);
+		this.on("close", (done: () => void) => client.logOut().then(() => done()));
 	}
 
 	RED.nodes.registerType("firebase-config", FirebaseConfigNode, {
@@ -49,4 +54,4 @@ export default function (RED: NodeAPI) {
 			url: { type: "text" },
 		},
 	});
-};
+}
