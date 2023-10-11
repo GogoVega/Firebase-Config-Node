@@ -9,7 +9,7 @@
     "build": "tsc",
     "clean": "rm -rf build/lib build/{**/,}*.{js,d.ts}",
     "lint": "eslint . --ext .ts",
-    "prettier": "prettier --write \"**/*.{md,ts}\"",
+    "prettier": "prettier --write \"**/*.{md,ts,html}\"",
     "test": "mocha './test/**/*_spec.js' --exit"
   },
   "repository": {
