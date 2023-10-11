@@ -14,7 +14,11 @@
  * limitations under the License.
  */
 
-//TODO: Fix the default exportation
-module.exports = require("./nodes/firebase-config").default;
+/*
+ * TODO: Fix the default exportation
+ * const node = require('@gogovega/firebase-config-node').default;
+ * How to remove this default...
+ */
 export { default } from "./nodes/firebase-config";
 export * from "./lib/types";
+export * from "./lib/utils";

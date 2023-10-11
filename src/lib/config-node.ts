@@ -18,6 +18,7 @@ import { NodeAPI, NodeStatus } from "node-red";
 import {
 	Client,
 	FirebaseError,
+	Firestore,
 	isFirebaseError,
 	LogCallbackParams,
 	onLog,
@@ -25,15 +26,7 @@ import {
 	SignState,
 } from "@gogovega/firebase-nodejs";
 import { firebaseError, nodeStatus } from "./const";
-import {
-	ConfigType,
-	JSONContentType,
-	NodeType,
-	ServiceAccount,
-	Status,
-	StatusListener,
-	StatusListeners,
-} from "./types";
+import { ConfigType, JSONContentType, NodeType, ServiceAccount, Status, ServiceType, StatusListeners } from "./types";
 
 /**
  * Firebase Class
@@ -52,7 +45,29 @@ import {
  * @returns A FirebaseConfig Class
  */
 export class FirebaseClient {
-	private statusListeners: StatusListeners;
+	private globalStatus: NodeStatus = nodeStatus.disconnected;
+	/**
+	 * Property called by the `Firebase:log` event. Gets the log in order to make it an error and to update the status of
+	 * the nodes.
+	 * @param log The log received
+	 */
+	private onLog: (log: LogCallbackParams) => void = (log: LogCallbackParams) => {
+		if (log.message.includes("URL of your Firebase Realtime Database instance configured correctly")) {
+			// Ignore if log is not for this instance
+			if (!log.message.includes(this.node.credentials.url)) return;
+			return this.onError(new FirebaseError("auth/invalid-database-url", ""));
+		}
+
+		if (log.message.includes("Invalid grant: account not found"))
+			return this.onError(new FirebaseError("auth/invalid-client-id", ""));
+
+		if (log.message.includes("Error while making request: getaddrinfo ENOTFOUND accounts.google.com"))
+			return this.onError(new FirebaseError("auth/network-request-failed", ""));
+
+		if (log.message.includes("app/invalid-credential"))
+			return this.onError(new FirebaseError("auth/invalid-credential", ""));
+	};
+	private statusListeners: StatusListeners = { firestore: [], rtdb: [], storage: [] };
 
 	constructor(
 		private node: NodeType,
@@ -60,25 +75,31 @@ export class FirebaseClient {
 		private RED: NodeAPI
 	) {
 		node.config = config;
-		node.globalStatus = nodeStatus.disconnected;
 		node.addStatusListener = this.addStatusListener.bind(this);
 		node.clientSignedIn = this.clientSignedIn.bind(this);
 		node.removeStatusListener = this.removeStatusListener.bind(this);
-		this.statusListeners = { firestore: [], rtdb: [], storage: [] };
-		this.initLogging();
+		node.setCurrentStatus = this.setCurrentStatus.bind(this);
+		this.enableGlobalLogHandler();
 	}
 
-	private addStatusListener(id: string, type: StatusListener) {
+	private addStatusListener(id: string, type: ServiceType) {
 		this.statusListeners[type].push(id);
-		this.setCurrentStatus(id);
+		// the node does not yet exist at this step => getNode returns null
+		setImmediate(() => this.setCurrentStatus(id));
 		this.restoreDestroyedConnection();
-		type === "rtdb" && this.getRTDB();
+		this.initDatabase(type);
 	}
 
-	private removeStatusListener(id: string, type: StatusListener, removed: boolean, done: (error?: unknown) => void) {
+	private initDatabase(type: ServiceType) {
+		type === "firestore" && this.initFirestore();
+		type === "rtdb" && this.initRTDB();
+	}
+
+	private removeStatusListener(id: string, type: ServiceType, removed: boolean, done: () => void) {
 		try {
 			const nodes = this.statusListeners[type];
 
+			// Remove id from array
 			nodes.forEach((nodeID) => {
 				if (nodeID !== id) return;
 				nodes.splice(nodes.indexOf(id), 1);
@@ -88,7 +109,8 @@ export class FirebaseClient {
 
 			done();
 		} catch (error) {
-			done(error);
+			// done(error) not yet supported for close event
+			this.node.error(error);
 		}
 	}
 
@@ -124,7 +146,7 @@ export class FirebaseClient {
 		if (!removed) return;
 
 		if (!rtdb.length && !firestore.length)
-			this.node.warn(`WARNING: '${name}' config node is unused! Connections with Firebase will be closed...`);
+			this.node.warn(`WARNING: '${name}' config node is unused! All connections with Firebase will be closed...`);
 
 		// TODO: Add firestore
 		if (rtdb.length === 0 && this.node.rtdb) {
@@ -180,26 +202,30 @@ export class FirebaseClient {
 		return cred as ServiceAccount;
 	}
 
-	private getRTDB() {
+	private initRTDB() {
 		// Skip if database already instanciate
 		if (this.node.rtdb) return;
 		if (!this.node.client?.clientInitialised) return;
 
 		this.node.rtdb = new RTDB(this.node.client);
-		this.subscribeConnectionState();
-	}
-
-	private subscribeConnectionState() {
-		if (!this.node.rtdb) return;
 
 		this.node.rtdb.on("log", (msg) => this.node.log(msg)).onStatusUpdate = (status) => this.updateGlobalStatus(status);
+	}
+
+	private initFirestore() {
+		// Skip if database already instanciate
+		if (this.node.firestore) return;
+		if (!this.node.client?.clientInitialised) return;
+
+		// TODO: Add log
+		this.node.firestore = new Firestore(this.node.client);
 	}
 
 	/**
 	 * Creates and initializes a logging to get warning message from bad database url configured and invalid credentials
 	 * in order to make it an error message.
 	 */
-	private initLogging() {
+	private enableGlobalLogHandler() {
 		// Works for both databases
 		// Known Issue: how to know which module returned the log?
 		if (!this.RED.events.eventNames().includes("Firebase:log"))
@@ -213,7 +239,7 @@ export class FirebaseClient {
 	 */
 	public async logIn() {
 		try {
-			// Initialize App
+			// Initialize the Client
 			this.node.client = new Client(
 				{
 					apiKey: this.node.credentials.apiKey,
@@ -227,7 +253,7 @@ export class FirebaseClient {
 			// Initialize Client Logging
 			this.node.client.on("warn", (msg) => this.node.warn(msg));
 
-			// Log In
+			// Sign In
 			switch (this.node.config.authType) {
 				case "anonymous":
 					await this.node.client.signInAnonymously();
@@ -252,8 +278,12 @@ export class FirebaseClient {
 				}
 			}
 		} catch (error) {
-			this.onError(error as Error);
+			this.onError(error);
 		}
+	}
+
+	private disableGlobalLogHandler() {
+		this.RED.events.removeListener("Firebase:log", this.onLog);
 	}
 
 	/**
@@ -263,11 +293,12 @@ export class FirebaseClient {
 	public logOut() {
 		if (!this.node.client?.clientInitialised) return Promise.resolve();
 
-		this.node.rtdb &&
-			!this.node.rtdb.offline &&
-			this.node.log(`Closing connection with Firebase RTDB: ${this.node.client.app?.options.databaseURL}`);
+		// TODO: Add firestore
+		const rtdbOnline = this.node.rtdb && !this.node.rtdb.offline;
 
-		this.RED.events.removeListener("Firebase:log", this.onLog);
+		if (rtdbOnline) this.node.log("Closing connection with Firebase RTDB");
+
+		this.disableGlobalLogHandler();
 
 		return this.node.client.signOut();
 	}
@@ -278,52 +309,21 @@ export class FirebaseClient {
 	 * @param error The error received
 	 * @param done If defined this callback will return the error message
 	 */
-	public onError(error: Error | FirebaseError, done?: (error?: unknown) => void) {
-		let msg = error.message || error.toString();
+	public onError(error: FirebaseError | unknown) {
+		const msg = isFirebaseError(error)
+			? firebaseError[error.code.split(".")[0]]
+			: error instanceof Error
+			? error.message || error.toString()
+			: error;
+		const status = isFirebaseError(error) && /auth\/network-request-failed/.test(error.code) ? "no-network" : "error";
+		const text =
+			isFirebaseError(error) && error.code.startsWith("auth/")
+				? error.code.split("auth/").pop()?.split(".")[0].replace(/-/gm, " ").toPascalCase()
+				: undefined;
 
-		if (isFirebaseError(error)) {
-			msg = firebaseError[error.code.split(".")[0]];
-			// Not working for firebase-admin... (hack working with log)
-			if (error.code.match(/auth\/network-request-failed/)) {
-				this.updateGlobalStatus("no-network");
-			} else if (error.code.startsWith("auth/")) {
-				this.updateGlobalStatus(
-					"error",
-					error.code.split("auth/").pop()?.split(".")[0].replace(/-/gm, " ").toPascalCase()
-				);
-			} else {
-				this.updateGlobalStatus("error");
-			}
-		} else {
-			this.updateGlobalStatus("error");
-		}
-
-		msg = msg || error.message || error.toString();
-
-		if (done) return done(msg);
-
+		this.updateGlobalStatus(status, text);
 		this.node.error(msg);
 	}
-
-	/**
-	 * Property called by the `Firebase:log` event. Gets the log in order to make it an error and to update the status of
-	 * the nodes.
-	 * @param log The log received
-	 */
-	private onLog = (log: LogCallbackParams) => {
-		if (log.message.includes("URL of your Firebase Realtime Database instance configured correctly")) {
-			if (!log.message.includes(this.node.credentials.url)) return;
-			return this.onError(new FirebaseError("auth/invalid-database-url", ""));
-		}
-		if (log.message.includes("Invalid grant: account not found"))
-			return this.onError(new FirebaseError("auth/invalid-client-id", ""));
-
-		if (log.message.includes("Error while making request: getaddrinfo ENOTFOUND accounts.google.com"))
-			return this.onError(new FirebaseError("auth/network-request-failed", ""));
-
-		if (log.message.includes("app/invalid-credential"))
-			return this.onError(new FirebaseError("auth/invalid-credential", ""));
-	};
 
 	/**
 	 * Restores the connection with Firebase if at least one node is activated.
@@ -331,25 +331,25 @@ export class FirebaseClient {
 	 */
 	private restoreDestroyedConnection() {
 		// TODO: Add firestore
-		if (this.node.rtdb?.offline) this.node.rtdb?.goOnline();
+		if (this.node.rtdb?.offline) this.node.rtdb.goOnline();
 	}
 
 	private setCurrentStatus(id: string) {
-		this.RED.nodes.getNode(id).status(this.node.globalStatus);
+		this.RED.nodes.getNode(id).status(this.globalStatus);
 	}
 
 	private updateGlobalStatus(status: Status, text?: string) {
-		const statusObject: NodeStatus =
+		const newGlobalStatus: NodeStatus =
 			status === "error"
 				? { fill: "red", shape: "dot", text: `Error${text ? ": ".concat(text) : ""}` }
 				: nodeStatus[status];
 
 		// Save the status
-		this.node.globalStatus = statusObject;
+		this.globalStatus = newGlobalStatus;
 
 		// TODO: Status pour firestore
 		for (const listeners of Object.values(this.statusListeners) as Array<Array<string>>) {
-			listeners.forEach((id) => this.RED.nodes.getNode(id).status(statusObject));
+			listeners.forEach((id) => this.RED.nodes.getNode(id).status(newGlobalStatus));
 		}
 	}
 }

@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
-import { Node, NodeStatus } from "node-red";
+import { Node } from "node-red";
 import { ConfigType } from "./ConfigType";
-import { Client, RTDB } from "@gogovega/firebase-nodejs";
+import { Client, Firestore, RTDB } from "@gogovega/firebase-nodejs";
+
+export { BothDataSnapshot, Unsubscription } from "@gogovega/firebase-nodejs";
 
 export interface JSONContentType extends Partial<ServiceAccount> {
 	client_email?: string;
@@ -36,7 +38,7 @@ export interface StatusListeners {
 	storage: Array<string>;
 }
 
-export type StatusListener = keyof StatusListeners;
+export type ServiceType = keyof StatusListeners;
 
 export type Status = "connected" | "connecting" | "disconnected" | "error" | "no-network" | "re-connecting";
 
@@ -59,12 +61,13 @@ type Credentials = {
 };
 
 export type NodeType = Node & {
-	addStatusListener(id: string, type: StatusListener): void;
+	addStatusListener(id: string, type: ServiceType): void;
 	client?: Client;
 	clientSignedIn(): Promise<boolean>;
 	config: ConfigType;
 	credentials: Credentials;
-	globalStatus: NodeStatus;
-	removeStatusListener(id: string, type: StatusListener, removed: boolean, done: () => void): void;
+	firestore?: Firestore;
+	removeStatusListener(id: string, type: ServiceType, removed: boolean, done: () => void): void;
 	rtdb?: RTDB;
+	setCurrentStatus(id: string): void;
 };
