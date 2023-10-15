@@ -23,10 +23,11 @@ import {
 	LogCallbackParams,
 	onLog,
 	RTDB,
+	ServiceAccount,
 	SignState,
-} from "@gogovega/firebase-nodejs";
+} from "../firebase";
 import { firebaseError, nodeStatus } from "./const";
-import { ConfigType, JSONContentType, NodeType, ServiceAccount, Status, ServiceType, StatusListeners } from "./types";
+import { Config, ConfigNode, ConnectionStatus, JSONContentType, ServiceType, StatusListeners } from "./types";
 
 /**
  * Firebase Class
@@ -70,8 +71,8 @@ export class FirebaseClient {
 	private statusListeners: StatusListeners = { firestore: [], rtdb: [], storage: [] };
 
 	constructor(
-		private node: NodeType,
-		config: ConfigType,
+		private node: ConfigNode,
+		config: Config,
 		private RED: NodeAPI
 	) {
 		node.config = config;
@@ -88,30 +89,6 @@ export class FirebaseClient {
 		setImmediate(() => this.setCurrentStatus(id));
 		this.restoreDestroyedConnection();
 		this.initDatabase(type);
-	}
-
-	private initDatabase(type: ServiceType) {
-		type === "firestore" && this.initFirestore();
-		type === "rtdb" && this.initRTDB();
-	}
-
-	private removeStatusListener(id: string, type: ServiceType, removed: boolean, done: () => void) {
-		try {
-			const nodes = this.statusListeners[type];
-
-			// Remove id from array
-			nodes.forEach((nodeID) => {
-				if (nodeID !== id) return;
-				nodes.splice(nodes.indexOf(id), 1);
-			});
-
-			this.destroyUnusedConnection(removed);
-
-			done();
-		} catch (error) {
-			// done(error) not yet supported for close event
-			this.node.error(error);
-		}
 	}
 
 	private clientSignedIn(): Promise<boolean> {
@@ -153,6 +130,23 @@ export class FirebaseClient {
 			this.node.rtdb.goOffline();
 			this.node.log("Connection with Firebase RTDB was closed because no node used.");
 		}
+	}
+
+	private disableGlobalLogHandler() {
+		this.RED.events.removeListener("Firebase:log", this.onLog);
+	}
+
+	/**
+	 * Creates and initializes a logging to get warning message from bad database url configured and invalid credentials
+	 * in order to make it an error message.
+	 */
+	private enableGlobalLogHandler() {
+		// Works for both databases
+		// Known Issue: how to know which module returned the log?
+		if (!this.RED.events.eventNames().includes("Firebase:log"))
+			onLog((log) => this.RED.events.emit("Firebase:log", log), { level: "warn" });
+
+		this.RED.events.on("Firebase:log", this.onLog);
 	}
 
 	private getClaims() {
@@ -202,14 +196,9 @@ export class FirebaseClient {
 		return cred as ServiceAccount;
 	}
 
-	private initRTDB() {
-		// Skip if database already instanciate
-		if (this.node.rtdb) return;
-		if (!this.node.client?.clientInitialised) return;
-
-		this.node.rtdb = new RTDB(this.node.client);
-
-		this.node.rtdb.on("log", (msg) => this.node.log(msg)).onStatusUpdate = (status) => this.updateGlobalStatus(status);
+	private initDatabase(type: ServiceType) {
+		type === "firestore" && this.initFirestore();
+		type === "rtdb" && this.initRTDB();
 	}
 
 	private initFirestore() {
@@ -221,17 +210,15 @@ export class FirebaseClient {
 		this.node.firestore = new Firestore(this.node.client);
 	}
 
-	/**
-	 * Creates and initializes a logging to get warning message from bad database url configured and invalid credentials
-	 * in order to make it an error message.
-	 */
-	private enableGlobalLogHandler() {
-		// Works for both databases
-		// Known Issue: how to know which module returned the log?
-		if (!this.RED.events.eventNames().includes("Firebase:log"))
-			onLog((log) => this.RED.events.emit("Firebase:log", log), { level: "warn" });
+	private initRTDB() {
+		// Skip if database already instanciate
+		if (this.node.rtdb) return;
+		if (!this.node.client?.clientInitialised) return;
 
-		this.RED.events.on("Firebase:log", this.onLog);
+		this.node.rtdb = new RTDB(this.node.client);
+
+		this.node.rtdb.onLog(({ level, message }) => this.node[level === "info" ? "log" : level](message));
+		this.node.rtdb.onStatusUpdate((status) => this.updateGlobalStatus(status));
 	}
 
 	/**
@@ -251,7 +238,8 @@ export class FirebaseClient {
 			);
 
 			// Initialize Client Logging
-			this.node.client.on("warn", (msg) => this.node.warn(msg));
+			// No info for now
+			this.node.client.onLog((msg) => msg.level === "warn" && this.node.warn(msg.message));
 
 			// Sign In
 			switch (this.node.config.authType) {
@@ -280,10 +268,6 @@ export class FirebaseClient {
 		} catch (error) {
 			this.onError(error);
 		}
-	}
-
-	private disableGlobalLogHandler() {
-		this.RED.events.removeListener("Firebase:log", this.onLog);
 	}
 
 	/**
@@ -325,6 +309,25 @@ export class FirebaseClient {
 		this.node.error(msg);
 	}
 
+	private removeStatusListener(id: string, type: ServiceType, removed: boolean, done: () => void) {
+		try {
+			const nodes = this.statusListeners[type];
+
+			// Remove id from array
+			nodes.forEach((nodeID) => {
+				if (nodeID !== id) return;
+				nodes.splice(nodes.indexOf(id), 1);
+			});
+
+			this.destroyUnusedConnection(removed);
+
+			done();
+		} catch (error) {
+			// done(error) not yet supported for close event
+			this.node.error(error);
+		}
+	}
+
 	/**
 	 * Restores the connection with Firebase if at least one node is activated.
 	 * @remarks This method should only be used if the connection has been destroyed.
@@ -338,7 +341,7 @@ export class FirebaseClient {
 		this.RED.nodes.getNode(id).status(this.globalStatus);
 	}
 
-	private updateGlobalStatus(status: Status, text?: string) {
+	private updateGlobalStatus(status: ConnectionStatus, text?: string) {
 		const newGlobalStatus: NodeStatus =
 			status === "error"
 				? { fill: "red", shape: "dot", text: `Error${text ? ": ".concat(text) : ""}` }

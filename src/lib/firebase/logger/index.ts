@@ -1,11 +1,12 @@
 /**
+ * @license
  * Copyright 2023 Gauthier Dandele
  *
- * Licensed under the MIT License,
+ * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * https://opensource.org/licenses/MIT.
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,18 +15,15 @@
  * limitations under the License.
  */
 
-declare global {
-	interface String {
-		toPascalCase(): string;
-	}
+export { onLog } from "firebase/app";
+export { LogCallbackParams } from "@firebase/logger/dist/src/logger";
+
+type Level = "info" | "warn";
+
+interface Log {
+	level: Level;
+	message: string;
 }
 
-String.prototype.toPascalCase = function () {
-	const words = this.match(/[a-z]+/gi);
-
-	if (!words) return "";
-
-	return words.map((word) => word.charAt(0).toUpperCase() + word.substring(1).toLowerCase()).join(" ");
-};
-
-export { deepCopy, isAdminDataSnapshot, isFirebaseError, printEnumKeys } from "@gogovega/firebase-nodejs";
+export type LogCallback = (log: Log) => void;
+export type LogFn = (message: string) => void;

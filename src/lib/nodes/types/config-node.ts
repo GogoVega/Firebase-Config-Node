@@ -15,10 +15,8 @@
  */
 
 import { Node } from "node-red";
-import { ConfigType } from "./ConfigType";
-import { Client, Firestore, RTDB } from "@gogovega/firebase-nodejs";
-
-export { BothDataSnapshot, Unsubscription } from "@gogovega/firebase-nodejs";
+import { Config } from "./config";
+import { Client, Firestore, RTDB, ServiceAccount } from "../../firebase";
 
 export interface JSONContentType extends Partial<ServiceAccount> {
 	client_email?: string;
@@ -26,21 +24,20 @@ export interface JSONContentType extends Partial<ServiceAccount> {
 	project_id?: string;
 }
 
-export interface ServiceAccount {
-	clientEmail: string;
-	privateKey: string;
-	projectId: string;
-}
+/**
+ * The different types of services supported by this node
+ */
+export type ServiceType = "firestore" | "rtdb" | "storage";
 
-export interface StatusListeners {
-	firestore: Array<string>;
-	rtdb: Array<string>;
-	storage: Array<string>;
-}
-
-export type ServiceType = keyof StatusListeners;
-
-export type Status = "connected" | "connecting" | "disconnected" | "error" | "no-network" | "re-connecting";
+export type ConnectionStatus =
+	| "connected"
+	| "connecting"
+	| "disconnect"
+	| "disconnected"
+	| "error"
+	| "no-network"
+	| "re-connecting";
+export type StatusListeners = Record<ServiceType, Array<string>>;
 
 type Credentials = {
 	apiKey: string;
@@ -60,14 +57,24 @@ type Credentials = {
 	url: string;
 };
 
-export type NodeType = Node & {
+export type ConfigNode = Node & {
+	/**
+	 * Add this node to the Global Configuration Node
+	 * @param id The node ID
+	 * @param type The Service Type
+	 */
 	addStatusListener(id: string, type: ServiceType): void;
 	client?: Client;
 	clientSignedIn(): Promise<boolean>;
-	config: ConfigType;
+	config: Config;
 	credentials: Credentials;
 	firestore?: Firestore;
 	removeStatusListener(id: string, type: ServiceType, removed: boolean, done: () => void): void;
+	/**
+	 * Class representing a Firebase Realtime Database.
+	 * Must be instantiated by calling {@link ConfigNode.addStatusListener | addStatusListener}
+	 */
 	rtdb?: RTDB;
 	setCurrentStatus(id: string): void;
+	readonly version: string;
 };

@@ -14,15 +14,18 @@
  * limitations under the License.
  */
 
-import { NodeDef } from "node-red";
+declare global {
+	interface String {
+		toPascalCase(): string;
+	}
+}
 
-type AuthType = "anonymous" | "email" | "privateKey" | "customToken";
+String.prototype.toPascalCase = function () {
+	const words = this.match(/[a-z]+/gi);
 
-type ClaimsType = Record<string, { value?: unknown; type?: unknown } | never>;
+	if (!words) return "";
 
-export type ConfigType = NodeDef & {
-	authType?: AuthType;
-	claims?: ClaimsType;
-	createUser?: boolean;
-	useClaims?: boolean;
+	return words.map((word) => word.charAt(0).toUpperCase() + word.substring(1).toLowerCase()).join(" ");
 };
+
+export {};

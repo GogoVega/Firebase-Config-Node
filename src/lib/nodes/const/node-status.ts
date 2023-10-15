@@ -15,12 +15,13 @@
  */
 
 import { NodeStatus } from "node-red";
-import { Status } from "../types";
+import { ConnectionStatus } from "../types";
 
-export const nodeStatus: Record<Exclude<Status, "error">, NodeStatus> = {
+export const nodeStatus: Record<Exclude<ConnectionStatus, "error">, NodeStatus> = {
 	connected: { fill: "green", shape: "dot", text: "Connected" },
-	connecting: { fill: "yellow", shape: "ring", text: "Connecting" },
+	connecting: { fill: "yellow", shape: "ring", text: "Connecting..." },
+	disconnect: { fill: "yellow", shape: "dot", text: "Disconnect..." },
 	disconnected: { fill: "red", shape: "dot", text: "Disconnected" },
 	"no-network": { fill: "red", shape: "ring", text: "No Network" },
-	"re-connecting": { fill: "yellow", shape: "ring", text: "Reconnecting" },
+	"re-connecting": { fill: "yellow", shape: "ring", text: "Reconnecting..." },
 };

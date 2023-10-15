@@ -20,5 +20,12 @@
  * How to remove this default...
  */
 export { default } from "./nodes/firebase-config";
-export * from "./lib/types";
-export * from "./lib/utils";
+export * from "./lib/firebase/client/types";
+export { isFirebaseError } from "./lib/firebase/client/utils";
+export * from "./lib/firebase/connection/types";
+export * from "./lib/firebase/logger";
+export * from "./lib/firebase/rtdb/types";
+export * from "./lib/firebase/rtdb/utils";
+export * from "./lib/firebase/utils";
+export * from "./lib/nodes/types";
+export * from "./lib/nodes/utils";

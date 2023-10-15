@@ -15,8 +15,10 @@
  */
 
 import { NodeAPI } from "node-red";
-import { FirebaseClient } from "../lib/config-node";
-import { ConfigType, NodeType } from "../lib/types";
+import { FirebaseClient } from "../lib/nodes/firebase-client";
+import { Config, ConfigNode } from "../lib/nodes/types";
+
+const VERSION = "0.0.1-alpha.1";
 
 export default function (RED: NodeAPI) {
 	/**
@@ -30,7 +32,7 @@ export default function (RED: NodeAPI) {
 	 * @param this The Firebase Config Node
 	 * @param config Configuration associated with this Config Node
 	 */
-	function FirebaseConfigNode(this: NodeType, config: ConfigType) {
+	function FirebaseConfigNode(this: ConfigNode, config: Config) {
 		RED.nodes.createNode(this, config);
 
 		const client = new FirebaseClient(this, config, RED);
@@ -39,6 +41,13 @@ export default function (RED: NodeAPI) {
 
 		this.on("close", (done: () => void) => client.logOut().then(() => done()));
 	}
+
+	Object.defineProperty(FirebaseConfigNode, "version", {
+		value: VERSION,
+		writable: false,
+		enumerable: true,
+		configurable: false,
+	});
 
 	RED.nodes.registerType("firebase-config", FirebaseConfigNode, {
 		credentials: {
