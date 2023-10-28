@@ -19,6 +19,7 @@ import { deleteApp, FirebaseApp, FirebaseOptions, initializeApp } from "firebase
 
 export class App {
 	private _app: FirebaseApp;
+	private _deleted: boolean = false;
 	public readonly admin: boolean = false;
 
 	constructor(options: FirebaseOptions, name?: string) {
@@ -29,7 +30,12 @@ export class App {
 		return this._app;
 	}
 
+	public get deleted(): boolean {
+		return this._deleted;
+	}
+
 	public deleteApp(): Promise<void> {
+		this._deleted = true;
 		return deleteApp(this._app);
 	}
 }

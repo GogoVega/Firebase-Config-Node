@@ -38,7 +38,6 @@ import { LogCallback, LogFn } from "../logger";
 export class Client extends TypedEmitter<ClientEvents> {
 	private _app?: AdminApp | App;
 	private _auth?: Auth;
-	private _clientDeleted: boolean = false;
 	private _clientInitialised: boolean = false;
 	private _signState: SignState = SignState.NOT_YET;
 	private warn: LogFn | null = null;
@@ -59,7 +58,7 @@ export class Client extends TypedEmitter<ClientEvents> {
 	}
 
 	public get clientDeleted(): boolean | undefined {
-		return this._clientDeleted;
+		return this._app?.deleted;
 	}
 
 	public get clientInitialised(): boolean | undefined {
@@ -85,10 +84,9 @@ export class Client extends TypedEmitter<ClientEvents> {
 	}
 
 	private deleteClient(): Promise<void> {
-		if (this._clientDeleted === true) throw new ClientError("Client already deleted");
 		if (!this._app) throw new ClientError("'deleteClient' called before 'signIn' call");
+		if (this._app.deleted === true) throw new ClientError("Client already deleted");
 
-		this._clientDeleted = true;
 		return this._app.deleteApp();
 	}
 
@@ -162,7 +160,7 @@ export class Client extends TypedEmitter<ClientEvents> {
 		let success = false;
 
 		if (this._signState === SignState.SIGNED_IN) throw new ClientError("Client already Signed in, Sign out before");
-		if (this._clientDeleted === true) throw new ClientError("Client deleted");
+		if (this._app?.deleted === true) throw new ClientError("Client deleted");
 
 		const admin = typeof configOrSignInFn === "object";
 		const config = admin ? configOrSignInFn : this.appConfig;
