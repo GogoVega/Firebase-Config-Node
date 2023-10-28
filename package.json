@@ -7,9 +7,10 @@
   "private": "true",
   "scripts": {
     "build": "tsc",
-    "clean": "rm -rf build/lib build/{**/,}*.{js,d.ts}",
+    "clean": "rimraf build/lib build/{**/,}*.{js,d.ts}",
+    "format": "prettier --write \"**/*.{md,ts,html}\"",
     "lint": "eslint . --ext .ts",
-    "prettier": "prettier --write \"**/*.{md,ts,html}\"",
+    "prebuild": "npm run clean",
     "test": "mocha './test/**/*_spec.js' --exit"
   },
   "repository": {
@@ -34,12 +35,6 @@
     "url": "https://github.com/GogoVega/firebase-config-node/issues"
   },
   "homepage": "https://github.com/GogoVega/firebase-config-node#readme",
-  "node-red": {
-    "nodes": {
-      "firebase-config": "build/nodes/firebase-config.js"
-    },
-    "version": ">=1.3.7"
-  },
   "dependencies": {
     "firebase": "^10.4.0",
     "firebase-admin": "^11.11.0",
@@ -64,5 +59,40 @@
     "README.md",
     "SECURITY.md",
     "package.json"
-  ]
+  ],
+  "exports": {
+    ".": "./build/index.js",
+    "./firestore": {
+      "types": "./build/lib/firebase/firestore/index.d.ts",
+      "require": "./build/lib/firebase/firestore/index.js"
+    },
+    "./rtdb": {
+      "types": "./build/lib/firebase/rtdb/index.d.ts",
+      "require": "./build/lib/firebase/rtdb/index.js"
+    },
+    "./types": {
+      "types": "./build/lib/nodes/types/index.d.ts",
+      "require": "./build/lib/nodes/types/index.js"
+    },
+    "./utils": {
+      "types": "./build/lib/firebase/utils/index.d.ts",
+      "require": "./build/lib/firebase/utils/index.js"
+    }
+  },
+  "typesVersions": {
+    "*": {
+      "firestore": [
+        "build/lib/firebase/firestore"
+      ],
+      "rtdb": [
+        "build/lib/firebase/rtdb"
+      ],
+      "types": [
+        "build/lib/nodes/types"
+      ],
+      "utils": [
+        "build/lib/firebase/utils"
+      ]
+    }
+  }
 }

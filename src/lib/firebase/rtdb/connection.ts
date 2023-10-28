@@ -16,11 +16,11 @@
  */
 
 import { FirebaseApp } from "firebase/app";
-import { Database, Unsubscribe, getDatabase, onValue, ref } from "firebase/database";
 import { App } from "firebase-admin/app";
+import { Database, Unsubscribe, getDatabase, onValue, ref } from "firebase/database";
 import { Database as AdminDatabase, getDatabase as adminGetDatabase } from "firebase-admin/database";
-import { Connection, ConnectionState } from "../connection";
 import { RTDBError } from "./error";
+import { Connection, ConnectionState } from "../connection";
 import { Client, SignState } from "../client";
 
 export class RTDBConnection extends Connection {

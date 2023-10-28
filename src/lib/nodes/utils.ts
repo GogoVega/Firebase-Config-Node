@@ -29,3 +29,26 @@ String.prototype.toPascalCase = function () {
 };
 
 export {};
+
+/*
+import { join } from "node:path";
+function configNodeAlreadyLoaded(): boolean {
+	const serverDir = require.main?.path;
+
+	if (!serverDir) return false;
+
+	// eslint-disable-next-line @typescript-eslint/no-var-requires
+	const registry = require(join(serverDir, "node_modules/@node-red/registry/lib/index.js"));
+
+	if (!registry) return false;
+
+	const modules: Record<string, object> = registry.getModuleList();
+
+	const result = modules["@gogovega/node-red-contrib-firebase-realtime-database"];
+	result && console.log("\nThe 'firebase-config' node is already loaded, you can ignore the below warning message:\n");
+
+	return result ? true : false;
+}
+
+export { configNodeAlreadyLoaded };
+*/

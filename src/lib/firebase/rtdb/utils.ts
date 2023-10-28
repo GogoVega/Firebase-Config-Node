@@ -15,12 +15,15 @@
  * limitations under the License.
  */
 
-import { DataSnapshot } from "firebase/database";
 import { DataSnapshot as AdminDataSnapshot } from "firebase-admin/database";
 import { BothDataSnapshot } from "./types";
 
 function isAdminDataSnapshot(dataSnapshot: BothDataSnapshot): dataSnapshot is AdminDataSnapshot {
-	return dataSnapshot instanceof DataSnapshot ? false : true;
+	// TODO: Why instanceof DataSnapshot not works here? Context?
+	return (
+		Object.prototype.hasOwnProperty.call(dataSnapshot, "getPriority") &&
+		Object.prototype.hasOwnProperty.call(dataSnapshot, "numChildren")
+	);
 }
 
 export { isAdminDataSnapshot };

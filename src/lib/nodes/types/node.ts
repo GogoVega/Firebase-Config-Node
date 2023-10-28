@@ -16,7 +16,9 @@
 
 import { Node } from "node-red";
 import { Config } from "./config";
-import { Client, Firestore, RTDB, ServiceAccount } from "../../firebase";
+import { Client, ServiceAccount } from "../../firebase/client";
+import { Firestore } from "../../firebase/firestore";
+import { RTDB } from "../../firebase/rtdb";
 
 export interface JSONContentType extends Partial<ServiceAccount> {
 	client_email?: string;

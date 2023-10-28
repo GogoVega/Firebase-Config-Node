@@ -14,18 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * TODO: Fix the default exportation
- * const node = require('@gogovega/firebase-config-node').default;
- * How to remove this default...
- */
-export { default } from "./nodes/firebase-config";
-export * from "./lib/firebase/client/types";
-export { isFirebaseError } from "./lib/firebase/client/utils";
-export * from "./lib/firebase/connection/types";
-export * from "./lib/firebase/logger";
-export * from "./lib/firebase/rtdb/types";
-export * from "./lib/firebase/rtdb/utils";
-export * from "./lib/firebase/utils";
-export * from "./lib/nodes/types";
-export * from "./lib/nodes/utils";
+export * from "./nodes/firebase-config";
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+module.exports = require("./nodes/firebase-config").default;

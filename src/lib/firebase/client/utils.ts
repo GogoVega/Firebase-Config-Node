@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-import { FirebaseError } from "firebase/app";
 import { ServiceAccount, cert } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 import { claimsNotAllowed } from "./constants";
@@ -57,15 +56,4 @@ async function createCustomToken(cred: Credentials, uid: string, claims?: object
 	return token;
 }
 
-function isFirebaseError(error: unknown): error is FirebaseError {
-	return (
-		error instanceof FirebaseError ||
-		(Object.prototype.hasOwnProperty.call(error, "code") &&
-			typeof error === "object" &&
-			error !== null &&
-			"name" in error &&
-			error.name === "FirebaseError")
-	);
-}
-
-export { checkJSONCredential, createCustomToken, isFirebaseError };
+export { checkJSONCredential, createCustomToken };

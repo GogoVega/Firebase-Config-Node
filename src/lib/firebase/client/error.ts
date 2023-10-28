@@ -15,7 +15,20 @@
  * limitations under the License.
  */
 
+import { FirebaseError } from "firebase/app";
+
 export { FirebaseError } from "firebase/app";
+
+export function isFirebaseError(error: unknown): error is FirebaseError {
+	return (
+		error instanceof FirebaseError ||
+		(Object.prototype.hasOwnProperty.call(error, "code") &&
+			typeof error === "object" &&
+			error !== null &&
+			"name" in error &&
+			error.name === "FirebaseError")
+	);
+}
 
 export class ClientError extends Error {
 	constructor(msg: string) {

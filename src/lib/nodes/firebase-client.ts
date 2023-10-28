@@ -15,17 +15,10 @@
  */
 
 import { NodeAPI, NodeStatus } from "node-red";
-import {
-	Client,
-	FirebaseError,
-	Firestore,
-	isFirebaseError,
-	LogCallbackParams,
-	onLog,
-	RTDB,
-	ServiceAccount,
-	SignState,
-} from "../firebase";
+import { Client, FirebaseError, isFirebaseError, ServiceAccount, SignState } from "../firebase/client";
+import { Firestore } from "../firebase/firestore";
+import { LogCallbackParams, onLog } from "../firebase/logger";
+import { RTDB } from "../firebase/rtdb";
 import { firebaseError, nodeStatus } from "./const";
 import { Config, ConfigNode, ConnectionStatus, JSONContentType, ServiceType, StatusListeners } from "./types";
 
@@ -109,11 +102,9 @@ export class FirebaseClient {
 	/**
 	 * Creates and initializes a callback to verify that the config node is in use.
 	 * Otherwise the connection with Firebase will be closed.
-	 * @note Use of a timer is essential because it's necessary to allow time for all nodes to start before checking
-	 * the number of nodes connected to this database.
 	 * @param removed A flag that indicates whether the node is being closed because it has been removed entirely,
 	 * or that it is just being restarted.
-	 * If `true`, execute the callback after 15s otherwise skip it.
+	 * If `true`, execute the callback otherwise skip it.
 	 */
 	private destroyUnusedConnection(removed: boolean) {
 		const { name } = this.node.config;
@@ -152,7 +143,7 @@ export class FirebaseClient {
 	private getClaims() {
 		const claims = this.node.config.claims || {};
 
-		return Object.entries(claims).reduce<Record<string, unknown | never>>((acc, [key, value]) => {
+		return Object.entries(claims).reduce<Record<string, unknown>>((acc, [key, value]) => {
 			acc[key] = value.value;
 			return acc;
 		}, {});
