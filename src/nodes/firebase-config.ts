@@ -39,7 +39,7 @@ export default function (RED: NodeAPI) {
 
 		client.logIn();
 
-		this.on("close", (done: () => void) => client.logOut().then(() => done()));
+		this.on("close", (done: () => void) => client.logOut(done));
 	}
 
 	Object.defineProperty(FirebaseConfigNode, "version", {

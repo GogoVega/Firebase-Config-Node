@@ -227,68 +227,79 @@ export class FirebaseClient {
 	/**
 	 * Connects to Firebase with the authentication method defined in the `config-node`.
 	 */
-	public async logIn() {
-		try {
-			// Initialize the Client
-			this.node.client = new Client(
-				{
-					apiKey: this.node.credentials.apiKey,
-					databaseURL: this.node.credentials.url,
-					projectId: this.node.credentials.projectId,
-					// storageBucket: this.node.credentials.storageBucket,
-				},
-				this.node.id
-			);
+	public logIn() {
+		(async () => {
+			try {
+				// Initialize the Client
+				this.node.client = new Client(
+					{
+						apiKey: this.node.credentials.apiKey,
+						databaseURL: this.node.credentials.url,
+						projectId: this.node.credentials.projectId,
+						// storageBucket: this.node.credentials.storageBucket,
+					},
+					this.node.id
+				);
 
-			// Initialize Client Logging
-			// No info for now
-			this.node.client.onLog((msg) => msg.level === "warn" && this.node.warn(msg.message));
+				// Initialize Client Logging
+				// No info for now
+				this.node.client.onLog((msg) => msg.level === "warn" && this.node.warn(msg.message));
 
-			// Sign In
-			switch (this.node.config.authType) {
-				case "anonymous":
-					await this.node.client.signInAnonymously();
-					break;
-				case "email": {
-					const { email, password } = this.node.credentials;
-					const createUser = this.node.config.createUser;
-					await this.node.client.signInWithEmailAndPassword(email, password, createUser);
-					break;
+				// Sign In
+				switch (this.node.config.authType) {
+					case "anonymous":
+						await this.node.client.signInAnonymously();
+						break;
+					case "email": {
+						const { email, password } = this.node.credentials;
+						const createUser = this.node.config.createUser;
+						await this.node.client.signInWithEmailAndPassword(email, password, createUser);
+						break;
+					}
+					case "privateKey": {
+						const { clientEmail, privateKey, projectId } = this.getJSONCredentials();
+						this.node.client.signInWithPrivateKey(projectId, clientEmail, privateKey);
+						break;
+					}
+					case "customToken": {
+						const claims = this.getClaims();
+						const cred = this.getJSONCredentials();
+						const uid = this.node.credentials.uid;
+						await this.node.client.signInWithCustomToken(cred, uid, claims);
+						break;
+					}
 				}
-				case "privateKey": {
-					const { clientEmail, privateKey, projectId } = this.getJSONCredentials();
-					this.node.client.signInWithPrivateKey(projectId, clientEmail, privateKey);
-					break;
-				}
-				case "customToken": {
-					const claims = this.getClaims();
-					const cred = this.getJSONCredentials();
-					const uid = this.node.credentials.uid;
-					await this.node.client.signInWithCustomToken(cred, uid, claims);
-					break;
-				}
+			} catch (error) {
+				this.onError(error);
 			}
-		} catch (error) {
-			this.onError(error);
-		}
+		})();
 	}
 
 	/**
 	 * Disconnects from Firebase.
-	 * @returns A promise for Firebase disconnection completion
+	 * @param done A function called when Firebase logout is complete
 	 */
-	public logOut() {
-		if (!this.node.client?.clientInitialised) return Promise.resolve();
+	public logOut(done: () => void) {
+		(async () => {
+			try {
+				if (!this.node.client?.clientInitialised) return done();
 
-		// TODO: Add firestore
-		const rtdbOnline = this.node.rtdb && !this.node.rtdb.offline;
+				// TODO: Add firestore
+				const rtdbOnline = this.node.rtdb && !this.node.rtdb.offline;
 
-		if (rtdbOnline) this.node.log("Closing connection with Firebase RTDB");
+				if (rtdbOnline) this.node.log("Closing connection with Firebase RTDB");
 
-		this.disableConnectionHandler();
-		this.disableGlobalLogHandler();
+				this.disableConnectionHandler();
+				this.disableGlobalLogHandler();
 
-		return this.node.client.signOut();
+				await this.node.client.signOut();
+
+				done();
+			} catch (error) {
+				// done(error) not yet supported for close event
+				this.node.error(error);
+			}
+		})();
 	}
 
 	/**
