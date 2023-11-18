@@ -40,6 +40,7 @@ import { Config, ConfigNode, ConnectionStatus, JSONContentType, ServiceType, Sta
  */
 export class FirebaseClient {
 	private globalStatus: NodeStatus = nodeStatus.disconnected;
+	private onFlowsStarted: () => void = () => this.destroyUnusedConnection();
 	/**
 	 * Property called by the `Firebase:log` event. Gets the log in order to make it an error and to update the status of
 	 * the nodes.
@@ -74,6 +75,7 @@ export class FirebaseClient {
 		node.removeStatusListener = this.removeStatusListener.bind(this);
 		node.setCurrentStatus = this.setCurrentStatus.bind(this);
 		this.enableGlobalLogHandler();
+		this.enableConnectionHandler();
 	}
 
 	private addStatusListener(id: string, type: ServiceType) {
@@ -100,18 +102,12 @@ export class FirebaseClient {
 	}
 
 	/**
-	 * Creates and initializes a callback to verify that the config node is in use.
-	 * Otherwise the connection with Firebase will be closed.
-	 * @param removed A flag that indicates whether the node is being closed because it has been removed entirely,
-	 * or that it is just being restarted.
-	 * If `true`, execute the callback otherwise skip it.
+	 * Checks for each database if at least one parent node is attached, otherwise the connection with this database
+	 * will be closed.
 	 */
-	private destroyUnusedConnection(removed: boolean) {
+	private destroyUnusedConnection() {
 		const { name } = this.node.config;
 		const { rtdb, firestore } = this.statusListeners;
-
-		// TODO: vérifier si utile
-		if (!removed) return;
 
 		if (!rtdb.length && !firestore.length)
 			this.node.warn(`WARNING: '${name}' config node is unused! All connections with Firebase will be closed...`);
@@ -127,12 +123,28 @@ export class FirebaseClient {
 		this.RED.events.removeListener("Firebase:log", this.onLog);
 	}
 
+	private disableConnectionHandler() {
+		this.RED.events.removeListener("flows:started", this.onFlowsStarted);
+	}
+
+	/**
+	 * Creates and initializes a callback to verify that the config node is in use.
+	 * Checks for each database if at least one parent node is attached, otherwise the connection with this database
+	 * will be closed.
+	 */
+	private enableConnectionHandler() {
+		// For config-node (re)starting (FULL Deploy - NR starting)
+		setImmediate(() => this.destroyUnusedConnection());
+		// For other cases where config-node does not restart (e.g. Modified Nodes Deploy)
+		this.RED.events.on("flows:started", this.onFlowsStarted);
+	}
+
 	/**
 	 * Creates and initializes a logging to get warning message from bad database url configured and invalid credentials
 	 * in order to make it an error message.
 	 */
 	private enableGlobalLogHandler() {
-		// Works for both databases
+		// Works for both databases - for ALL config-node instances - call onlog once and ONLY once
 		// Known Issue: how to know which module returned the log?
 		if (!this.RED.events.eventNames().includes("Firebase:log"))
 			onLog((log) => this.RED.events.emit("Firebase:log", log), { level: "warn" });
@@ -273,6 +285,7 @@ export class FirebaseClient {
 
 		if (rtdbOnline) this.node.log("Closing connection with Firebase RTDB");
 
+		this.disableConnectionHandler();
 		this.disableGlobalLogHandler();
 
 		return this.node.client.signOut();
@@ -282,7 +295,6 @@ export class FirebaseClient {
 	 * A custom method in case of error allowing to send a predefined error message if this error is known
 	 * otherwise returns the message as it is.
 	 * @param error The error received
-	 * @param done If defined this callback will return the error message
 	 */
 	public onError(error: FirebaseError | unknown) {
 		const msg = isFirebaseError(error)
@@ -300,17 +312,13 @@ export class FirebaseClient {
 		this.node.error(msg);
 	}
 
-	private removeStatusListener(id: string, type: ServiceType, removed: boolean, done: () => void) {
+	private removeStatusListener(id: string, type: ServiceType, done: () => void) {
 		try {
 			const nodes = this.statusListeners[type];
 
 			// Remove id from array
-			nodes.forEach((nodeID) => {
-				if (nodeID !== id) return;
-				nodes.splice(nodes.indexOf(id), 1);
-			});
-
-			this.destroyUnusedConnection(removed);
+			const indexToRemove = nodes.indexOf(id);
+			if (indexToRemove !== -1) nodes.splice(indexToRemove, 1);
 
 			done();
 		} catch (error) {

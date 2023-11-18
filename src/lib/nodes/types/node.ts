@@ -71,7 +71,7 @@ export type ConfigNode = Node & {
 	config: Config;
 	credentials: Credentials;
 	firestore?: Firestore;
-	removeStatusListener(id: string, type: ServiceType, removed: boolean, done: () => void): void;
+	removeStatusListener(id: string, type: ServiceType, done: () => void): void;
 	/**
 	 * Class representing a Firebase Realtime Database.
 	 * Must be instantiated by calling {@link ConfigNode.addStatusListener | addStatusListener}
