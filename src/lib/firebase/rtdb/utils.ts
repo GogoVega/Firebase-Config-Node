@@ -18,9 +18,10 @@
 import { DataSnapshot as AdminDataSnapshot } from "firebase-admin/database";
 import { BothDataSnapshot } from "./types";
 
+// TODO: Use custom DataSnapshot class to remove this following
 function isAdminDataSnapshot(dataSnapshot: BothDataSnapshot): dataSnapshot is AdminDataSnapshot {
-	// TODO: Why instanceof DataSnapshot not works here? Context?
 	return (
+		dataSnapshot.constructor.name === "DataSnapshot" &&
 		Object.prototype.hasOwnProperty.call(dataSnapshot, "getPriority") &&
 		Object.prototype.hasOwnProperty.call(dataSnapshot, "numChildren")
 	);

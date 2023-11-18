@@ -93,3 +93,5 @@ export type DatabaseReference = Reference | Query;
 
 export type SubscribeCallback = (snapshot: BothDataSnapshot, previousChildName?: string | null) => void;
 export type Unsubscribe = () => void;
+
+export { ServerValue } from "firebase-admin/database";

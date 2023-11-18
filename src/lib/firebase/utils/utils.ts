@@ -15,6 +15,17 @@
  * limitations under the License.
  */
 
+export function isFirebaseConfigNode(node: unknown) {
+	return !!(
+		typeof node === "object" &&
+		node &&
+		"client" in node &&
+		typeof node.client === "object" &&
+		node.client &&
+		node.client.constructor.name === "Client"
+	);
+}
+
 export function printEnumKeys(obj: object) {
 	return Object.keys(obj)
 		.filter((x) => !Number.isInteger(Number(x)))
