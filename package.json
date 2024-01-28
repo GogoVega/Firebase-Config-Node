@@ -35,6 +35,12 @@
     "url": "https://github.com/GogoVega/firebase-config-node/issues"
   },
   "homepage": "https://github.com/GogoVega/firebase-config-node#readme",
+  "node-red": {
+    "nodes": {
+      "firebase-config": "build/nodes/firebase-config.js"
+    },
+    "version": ">=1.3.7"
+  },
   "dependencies": {
     "firebase": "^10.4.0",
     "firebase-admin": "^11.11.0",
