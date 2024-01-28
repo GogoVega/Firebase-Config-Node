@@ -11,7 +11,7 @@
       "password": "Password",
       "privateKey": "Private Key",
       "projectId": "Project ID",
-      "storageBucket": "Storage Bucket",
+      "storageBucket": "Bucket",
       "uid": "UID",
       "url": "URL"
     },
@@ -25,8 +25,7 @@
       "credentials": "Credentials",
       "firestore": "Firestore",
       "rtdb": "Realtime Database",
-      "storage": "Cloud Storage",
-      "tips": "Tips"
+      "storage": "Cloud Storage"
     },
     "value": {
       "anonymous": "Anonymous",
@@ -50,13 +49,18 @@
     "useClaims": "Use additional claims to authenticate?",
     "clickDragHere": "Click or drag the file here.",
     "dropFileHere": "Drop File Here",
-    "tips": {
+    "nothing2complete": "Nothing to complete",
+    "tooltips": {
       "apiKey": "<strong>API Key</strong> can be found in the project settings.",
+      "clientEmail": "<strong>Client Email</strong> can be found in the JSON file, it is the <strong>client_email</strong> field.",
       "email": "If you have already created a Firebase user with an email address and password, just fill in your credentials.\nOn the other hand, if you have not yet created one, you can do so in two ways:",
-      "emailMethod1": "Go to Firebase in the <strong>Authenticate</strong> section and click on \"Add User\" then enter your credentials in the configuration node.",
-      "emailMethod2": "Enter directly into the configuration node, an email address and a password, the node will create a user for you. This user will appear after login in the <strong>Authenticate</strong> section.",
-      "url": "<strong>URL</strong> can be found in the Realtime Database console, this differs by geographic location, the link structure is as follows: <strong>https://&#x3C;project-id&#x3E;-default-rtdb.&#x3C;continent&#x3E;.firebaseddatabase.app/</strong> or ends with <strong>.firebaseio.com</strong> for the United States.",
-      "json": "To generate a JSON file, go to the Firebase, in the <strong>Project Settings</strong> section, click on <strong>Service Accounts</strong> and then on <strong>Generate new private key</strong>. This will download a JSON file which you can either drop in the area or open and paste into the configuration node."
+      "json": "To generate a JSON file, go to the Firebase, in the <strong>Project Settings</strong> section, click on <strong>Service Accounts</strong> and then on <strong>Generate new private key</strong>. This will download a JSON file which you can either drop in the area or open and paste into the configuration node.",
+      "password": "The password associated with the provided email address.",
+      "privateKey": "The Private Key contained in the JSON file.",
+      "projectId": "The Firebase project ID",
+      "storageBucket": "The name of the Cloud Storage Bucket.",
+      "uid": "Uniquely identifies the user or device you are authenticating.",
+      "url": "<strong>URL</strong> can be found in the Realtime Database console, this differs by geographic location, the link structure is as follows: <strong>https://&#x3C;project-id&#x3E;-default-rtdb.&#x3C;continent&#x3E;.firebaseddatabase.app/</strong> or ends with <strong>.firebaseio.com</strong> for the United States."
     }
   }
 }

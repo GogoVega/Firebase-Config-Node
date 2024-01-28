@@ -14,97 +14,47 @@
   limitations under the License.
 -->
 
-<style>
-	.firebase-text-divider {
-		display: flex;
-		align-items: center;
-		--text-divider-gap: 1rem;
-		margin-top: 20px;
-		margin-bottom: 10px;
-	}
+<!-- Load Scripts -->
+<script type="text/javascript" src="resources/@gogovega/firebase-config-node/common.js"></script>
+<script type="text/javascript" src="resources/@gogovega/firebase-config-node/drag-and-drop.js"></script>
+<script type="text/javascript" src="resources/@gogovega/firebase-config-node/claims-container.js"></script>
 
-	.firebase-text-divider::before,
-	.firebase-text-divider::after {
-		content: "";
-		height: 1px;
-		background-color: silver;
-		flex-grow: 1;
-	}
-
-	.firebase-text-divider::before {
-		margin-right: var(--text-divider-gap);
-	}
-
-	.firebase-text-divider::after {
-		margin-left: var(--text-divider-gap);
-	}
-
-	#json-drop-target {
-		margin: auto;
-		width: 100%;
-		height: 150px;
-		text-align: center;
-		line-height: 150px;
-		background-color: lightgrey;
-		color: darkgray;
-		border-color: darkgray;
-		border-width: 2px;
-		border-style: solid;
-		border-radius: 6px;
-		font-family: "HelveticaNeue-Light", "Calibri Light";
-		font-size: 20px;
-		box-shadow: 11px 10px 17px -12px rgba(0, 0, 0, 0.75);
-	}
-
-	#file-drop-target {
-		position: absolute;
-		top: 0;
-		bottom: 0;
-		left: 0;
-		right: 0;
-		background: var(--red-ui-dnd-background);
-		display: table;
-		width: 100%;
-		height: 100%;
-		display: none;
-		z-index: 100;
-	}
-
-	#file-drop-target div {
-		pointer-events: none;
-		display: table-cell;
-		vertical-align: middle;
-		text-align: center;
-		font-size: 40px;
-		color: var(--red-ui-dnd-color);
-	}
-
-	#file-drop-target i {
-		pointer-events: none;
-		font-size: 80px;
-	}
-</style>
+<!-- Load CSS Styles -->
+<link href="resources/@gogovega/firebase-config-node/styles.css" rel="stylesheet" type="text/css" />
 
 <script type="text/javascript">
+	"use strict";
+
 	(function () {
+		const editableClaimsList = FirebaseConfigClaimsContainer.editableClaimsList.create();
+		const { appendTooltipsToAllFields, validators } = FirebaseConfigUI;
+		const { validateClaims } = FirebaseConfigClaimsContainer;
+		const { dropTarget } = FirebaseConfigDropArea;
+		const i18n = (key) => FirebaseConfigUI._(key, "firebase-config");
+
 		RED.nodes.registerType("firebase-config", {
 			category: "config",
 			paletteLabel: "Firebase Config",
 			credentials: {
-				apiKey: { type: "text", validate: RED.validators.regex(/^AIza[a-zA-Z0-9-_\\]{35}$/) },
-				clientEmail: { type: "password", validate: RED.validators.regex(/^__PWRD__$|^\S+\.iam\.gserviceaccount\.com$/) },
-				email: { type: "text", validate: RED.validators.regex(/^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/i) },
-				password: { type: "password", validate: RED.validators.regex(/^.+$/) },
-				privateKey: { type: "password", validate: RED.validators.regex(/^__PWRD__$|-----BEGIN PRIVATE KEY-----\S+-----END PRIVATE KEY-----/) },
-				projectId: { type: "text", validate: RED.validators.regex(/^$|^[a-zA-Z0-9-]{4,30}$/) },
-				storageBucket: { type: "text", validate: RED.validators.regex(/^$|^[a-zA-Z0-9-]{4,30}\.appspot\.com$/) },
-				uid: { type: "text", validate: RED.validators.regex(/^.{1,128}$/) },
-				url: { type: "text", validate: RED.validators.regex(/^$|^https:\/\/[a-zA-Z0-9-]{4,30}-default-rtdb\.((asia-southeast1|europe-west1)\.firebasedatabase\.app|firebaseio\.com)\/$/) },
+				apiKey: { type: "text", label: i18n("label.apiKey"), validate: validators.apiKey() },
+				clientEmail: { type: "password", label: i18n("label.clientEmail"), validate: validators.clientEmail() },
+				email: { type: "text", label: i18n("label.email"), validate: validators.email() },
+				json: { type: "password" }, // Legacy Config
+				password: { type: "password", label: i18n("label.password"), validate: validators.password() },
+				privateKey: { type: "password", label: i18n("label.privateKey"), validate: validators.privateKey() },
+				projectId: { type: "text", label: i18n("label.projectId"), validate: validators.projectId() },
+				storageBucket: { type: "text", label: i18n("label.storageBucket"), validate: validators.storageBucket() },
+				uid: { type: "text", label: i18n("label.uid"), validate: validators.uid() },
+				url: { type: "text", label: i18n("label.url"), validate: validators.url() },
 			},
 			defaults: {
 				name: { value: "My Database" },
-				authType: { value: "anonymous", validate: RED.validators.regex(/^(anonymous|email|privateKey|customToken)$/) },
-				claims: { value: {}, validate: isClaimsValid },
+				authType: {
+					value: "anonymous",
+					label: i18n("label.authType"),
+					validate: RED.validators.regex(/^(anonymous|email|privateKey|customToken)$/),
+				},
+				claims: { value: {}, label: i18n("label.claims"), validate: validateClaims() },
 				createUser: { value: false },
 				useClaims: { value: false },
 			},
@@ -112,199 +62,60 @@
 				return this.name || "My Database";
 			},
 			oneditprepare: function () {
+				appendTooltipsToAllFields();
+
+				dropTarget.create();
+				editableClaimsList.build(this);
+
 				const authType = $("#node-config-input-authType");
 				const claimsContainer = $("#node-config-input-claims-container");
 				const useClaims = $("#node-config-input-useClaims");
-
-				// Drop screen
-				$(`<div id="file-drop-target"><div><i class="fa fa-download"></i><br/><span>${this._("firebase-config.dropFileHere")}</span></div></div>`).appendTo("#red-ui-editor-stack > div > div.red-ui-tray-body-wrapper > div");
 
 				authType.on("change", () => hideShow(authType.val()));
 
 				// deprecated
 				$("#node-config-input-json").typedInput({ default: "json", types: ["json"] });
 
-				$("#red-ui-editor-stack").on("dragenter", dragEnter);
-				$("#json-drop-target").on("click", filePrompt);
-				$("#file-drop-target").on("dragover", dragOverHandler).on("dragleave", dragLeave).on("drop", dropHandler).hide();
-
-				claimsContainer.css("min-height", "150px").css("min-width", "300px").editableList({
-					addButton: this._("firebase-config.addClaim"),
-					addItem: addItem,
-					removable: true,
-					sortable: true,
-				});
-
-				useClaims.on("change", useClaimsHandler.bind(this));
-
 				const tabs = RED.tabs.create({
 					id: "node-config-firebase-tabs",
-					onchange: function(tab) {
+					onchange: function (tab) {
 						$("#node-config-firebase-tabs-content").children().hide();
 						$("#" + tab.id).show();
-					}
+					},
 				});
 
 				tabs.addTab({
 					id: "firebase-tab-connection",
-					label: this._("firebase-config.tabs.connection")
+					label: this._("firebase-config.tabs.connection"),
 				});
 
 				tabs.addTab({
 					id: "firebase-tab-security",
-					label: this._("firebase-config.tabs.security")
+					label: this._("firebase-config.tabs.security"),
 				});
 
 				tabs.addTab({
 					id: "firebase-tab-databases",
-					label: this._("firebase-config.tabs.databases")
+					label: this._("firebase-config.tabs.databases"),
 				});
 
 				tabs.activateTab("firebase-tab-connection");
 			},
 			oneditsave: function () {
-				const node = this;
+				const clientEmail = $("#node-config-input-clientEmail");
+				const privateKey = $("#node-config-input-privateKey");
 
-				node.credentials.clientEmail = $("#node-config-input-clientEmail").data("data") || $("#node-config-input-clientEmail").val();
-				node.credentials.privateKey = $("#node-config-input-privateKey").data("data") || $("#node-config-input-privateKey").val();
-				console.log($("#node-config-input-privateKey").data("data"), $("#node-config-input-privateKey").val())
+				this.credentials.clientEmail = clientEmail.data("data") || clientEmail.val();
+				this.credentials.privateKey = privateKey.data("data") || privateKey.val();
 
-				const claimsContainer = $("#node-config-input-claims-container").editableList("items").sort(compare);
-
-				node.claims = {};
-
-				claimsContainer.each(function () {
-					const id = $(this).data("data")?.id;
-					const key = $(this).find(`#node-config-input-claimsKey-case-${id}`).val();
-					const value = $(this).find(`#node-config-input-claimsValue-case-${id}`).val();
-					const type = $(this).find(`#node-config-input-claimsValueType-case-${id}`).val();
-					try {
-						let valueParsed =
-							type === "date" ? Date.now() :
-							type === "num" ? Number(value) :
-							type === "bool" ? (value === "true" ? true : false) :
-							type === "json" ? JSON.parse(value) :
-							value;
-
-						if (type === "num" && Number.isNaN(valueParsed)) {
-							RED.notify("Additional Claims: Setted value is not a number!", "error");
-							valueParsed = value;
-						}
-
-						node.claims[key] = { value: valueParsed, type: type };
-					} catch (error) {
-						// Save the value of field instead of the valueParsed
-						// Allows the user to re-modify the value
-						node.claims[key] = { value: value, type: type };
-						RED.notify("Additional Claims: Setted value is invalid JSON!", "error");
-					}
-				});
+				editableClaimsList.saveItems();
 			},
+			oneditresize: (size) => editableClaimsList.reSize(size),
 		});
 
-		function addItem(container, index, data) {
-			const id = Math.floor((0x99999 - 0x10000) * Math.random()).toString();
-
-			const HTMLBody = `
-				<div style="flex-grow:1">
-					<div style="display:flex;">
-						<input type="text" id="node-config-input-claimsKey-case-${id}" style="width:165px; text-align:center;" placeholder="Key" />
-						<div style="flex-grow:1; margin-left:5px;">
-							<input type="text" id="node-config-input-claimsValue-case-${id}" style="width:100%;" placeholder="Value" />
-							<input type="hidden" id="node-config-input-claimsValueType-case-${id}" style="width:100%;" />
-						</div>
-					</div>
-				</div>`;
-
-			container.css({
-				overflow: "hidden",
-				whiteSpace: "nowrap",
-				display: "flex",
-				"align-items": "center",
-			});
-
-			$(container).html(HTMLBody);
-			const keyField = $(container).find(`#node-config-input-claimsKey-case-${id}`);
-			const valueField = $(container).find(`#node-config-input-claimsValue-case-${id}`);
-
-			keyField.typedInput({ default: "str", types: [{ value: "str", label: "string", icon: "red/images/typedInput/az.svg", validate: isClaimKeyValid }] });
-			valueField.typedInput({ default: "str", typeField: `#node-config-input-claimsValueType-case-${id}`, types: ["str", "num", "bool", "date", "json"] });
-
-			if (Array.isArray(data)) {
-				const [key, object] = data;
-
-				keyField.typedInput("value", key);
-				valueField.typedInput("value", typeof object.value === "object" ? JSON.stringify(object.value) : object.value?.toString() ?? "");
-				valueField.typedInput("type", object.type ?? "str");
-
-				data = {};
-				$(container).data("data", data);
-			}
-
-			data.id = id;
-			data.index = index;
-		}
-
-		function compare(a, b) {
-			return a.index - b.index;
-		}
-
-		function dragEnter() {
-			event.preventDefault();
-			event.stopPropagation();
-			$("#file-drop-target").css({ display: "table" }).focus();
-		}
-
-		function dragLeave() {
-			event.preventDefault();
-			event.stopPropagation();
-			$("#file-drop-target").hide();
-		}
-
-		// Prevent default behavior (Prevent file from being opened)
-		function dragOverHandler() {
-			event.preventDefault();
-			event.stopPropagation();
-		}
-
-		// Read drag data
-		function dropHandler() {
-			event.preventDefault();
-			event.stopPropagation();
-
-			$("#file-drop-target").hide();
-
-			if (event.dataTransfer.items) {
-				[...event.dataTransfer.items].forEach((item, i) => {
-					if (item.kind === "file") {
-						const file = item.getAsFile();
-						readData(file);
-					} else if (item.kind === "string") {
-						if (item.type !== "text/plain") return;
-						item.getAsString((s) => parseAndUpdateInputs(s));
-					} else {
-						alert("The dropped item must be an file .txt or .json");
-					}
-				});
-			}
-		}
-
-		// Prompt file
-		function filePrompt() {
-			const onChange = (e) => readData(e.target.files[0]);
-			const input = document.createElement("input");
-			input.type = "file";
-			input.onchange = onChange;
-			input.click();
-		}
-
 		function hideShow(type) {
-			const useClaims = $("#node-config-input-useClaims").prop("checked");
-
 			$(".login-row").hide();
 			$(`.login-row-${type}`).show();
-
-			useClaims === true && type === "customToken" ? $(".form-row-claims").show() : $(".form-row-claims").hide();
 
 			// DEPRECATED
 			// Disables JSON input if node config uses it (old config < 0.3.0)
@@ -314,69 +125,6 @@
 				} else {
 					$(".form-row-json-deprecated").hide();
 				}
-			}
-		}
-
-		function isClaimKeyValid(key) {
-			if (key.match(/^(acr|amr|at_hash|aud|auth_time|azp|cnf|c_hash|exp|iat|iss|jti|nbf|nonce|sub|firebase|user_id)$|^\s|\s$/)) return false;
-			return true;
-		}
-
-		function isClaimsValid(claims = {}) {
-			if (typeof claims !== "object") return false;
-
-			for (const [k, v] of Object.entries(claims)) {
-				if (!isClaimKeyValid(k)) return false;
-				if (v.type.match(/^(num|date)$/) && (typeof v.value !== "number" || Number.isNaN(v.value))) return false;
-				if (v.type === "bool" && typeof v.value !== "boolean") return false;
-				if (v.type === "json" && typeof v.value !== "object") return false;
-				if (v.type === "str" && typeof v.value !== "string") return false;
-			}
-
-			return true;
-		}
-
-		function parseAndUpdateInputs(content) {
-			try {
-				const data = JSON.parse(content);
-
-				$("#node-config-input-clientEmail").data("data", data["clientEmail"] || data["client_email"]).val( "__PWRD__");
-				$("#node-config-input-privateKey").data("data", data["privateKey"] || data["private_key"]).val("__PWRD__");
-				$("#node-config-input-projectId").val(data["projectId"] || data["project_id"]);
-				$("#json-drop-target").html("The file has been loaded.");
-			} catch (error) {
-				$("#json-drop-target").html("An error has occurred :(");
-				alert(error.message || error.toString());
-			}
-		}
-
-		// Read Data
-		function readData(file) {
-			const name = file.name.toLowerCase();
-			const reader = new FileReader();
-
-			if (!name.match(/\.(txt|json)$/)) return alert("The file extension must be .txt or .json");
-
-			reader.onload = (ev) => parseAndUpdateInputs(ev.target.result);
-			reader.readAsText(file, "UTF-8");
-		}
-
-		function useClaimsHandler() {
-			const authType = $("#node-config-input-authType");
-			const claimsContainer = $("#node-config-input-claims-container");
-			const claimsContainerRow = $(".form-row-claims");
-			const useClaims = $("#node-config-input-useClaims");
-
-			if (useClaims.prop("checked") === true) {
-				let claims = Object.entries(this.claims || {});
-
-				if (claims.length === 0) claims = [["admin", { value: false, type: "bool" }], ["debug", { value: false, type: "bool" }]];
-
-				claims.forEach((item) => claimsContainer.editableList("addItem", item));
-				claimsContainerRow.show();
-			} else {
-				claimsContainerRow.hide();
-				claimsContainer.editableList("empty");
 			}
 		}
 	})();
@@ -408,13 +156,7 @@
 				</select>
 			</div>
 
-			<div class="form-row login-row login-row-email">
-				<label for="node-config-input-createUser">&nbsp;</label>
-				<input type="checkbox" id="node-config-input-createUser" style="display:inline-block; width:15px; vertical-align:baseline;"/>
-				<span data-i18n="firebase-config.createNewUser"></span>
-			</div>
-
-			<div class="form-row login-row login-row-anonymous login-row-customToken login-row-email">
+			<div class="form-row form-row-apiKey login-row login-row-anonymous login-row-customToken login-row-email">
 				<label for="node-config-input-apiKey"><i class="fa fa-key"></i> <span data-i18n="firebase-config.label.apiKey"></span></label>
 				<input type="text" id="node-config-input-apiKey" style="width:70%;" data-i18n="[placeholder]firebase-config.placeholder.apiKey" />
 			</div>
@@ -424,22 +166,24 @@
 		<div id="firebase-tab-security" style="display:none;">
 			<div class="firebase-text-divider" data-i18n="firebase-config.divider.credentials"></div>
 
-			<span class="login-row login-row-anonymous" data-i18n="firebase-config.nothing2complete"></span>
+			<div class="login-row login-row-anonymous" style="flex-grow: 1; text-align: center;">
+				<p><span data-i18n="firebase-config.nothing2complete"></span> &#128540;</p>
+			</div>
 
 			<!-- JSON Private Key -->
 			<!-- DEPRECATED -->
-			<div class="form-row login-row login-row-customToken login-row-privateKey form-row-json-deprecated">
+			<div class="form-row form-row-json login-row login-row-customToken login-row-privateKey form-row-json-deprecated">
 				<label for="node-config-input-json"><i class="fa fa-file-code-o"></i> <span data-i18n="firebase-config.label.json"></span></label>
 				<input type="text" id="node-config-input-json" style="width:70%;" data-i18n="[placeholder]firebase-config.placeholder.json" />
 			</div>
 			<!-- END DEPRECATED -->
 
-			<div class="form-row login-row login-row-customToken login-row-privateKey">
+			<div class="form-row form-row-clientEmail login-row login-row-customToken login-row-privateKey">
 				<label for="node-config-input-clientEmail"><i class="fa fa-envelope"></i> <span data-i18n="firebase-config.label.clientEmail"></span></label>
 				<input type="password" id="node-config-input-clientEmail" style="width:70%;" data-i18n="[placeholder]firebase-config.placeholder.clientEmail"/>
 			</div>
 
-			<div class="form-row login-row login-row-customToken login-row-privateKey">
+			<div class="form-row form-row-privateKey login-row login-row-customToken login-row-privateKey">
 				<label for="node-config-input-privateKey"><i class="fa fa-key"></i> <span data-i18n="firebase-config.label.privateKey"></span></label>
 				<input type="password" id="node-config-input-privateKey" style="width:70%;" data-i18n="[placeholder]firebase-config.placeholder.privateKey"/>
 			</div>
@@ -451,14 +195,20 @@
 			</div>
 
 			<!-- Email login -->
-			<div class="form-row login-row login-row-email">
+			<div class="form-row form-row-email login-row login-row-email">
 				<label for="node-config-input-email"><i class="fa fa-envelope"></i> <span data-i18n="firebase-config.label.email"></span></label>
 				<input type="email" id="node-config-input-email" style="width:70%;" data-i18n="[placeholder]firebase-config.placeholder.email" />
 			</div>
 
-			<div class="form-row login-row login-row-email">
+			<div class="form-row form-row-password login-row login-row-email">
 				<label for="node-config-input-password"><i class="fa fa-lock"></i> <span data-i18n="firebase-config.label.password"></span></label>
 				<input type="password" id="node-config-input-password" style="width:70%;" data-i18n="[placeholder]firebase-config.placeholder.password" />
+			</div>
+
+			<div class="form-row login-row login-row-email">
+				<label for="node-config-input-createUser">&nbsp;</label>
+				<input type="checkbox" id="node-config-input-createUser" style="display:inline-block; width:15px; vertical-align:baseline;"/>
+				<span data-i18n="firebase-config.createNewUser"></span>
 			</div>
 
 			<!-- Additional Claims -->
@@ -468,7 +218,7 @@
 				<span data-i18n="firebase-config.useClaims">
 			</div>
 
-			<div class="form-row form-row-claims">
+			<div class="form-row node-config-input-claims-container-row">
 				<ol id="node-config-input-claims-container"></ol>
 			</div>
 
@@ -480,39 +230,24 @@
 		<div id="firebase-tab-databases" style="display:none;">
 			<div class="firebase-text-divider" data-i18n="firebase-config.divider.rtdb"></div>
 
-			<div class="form-row">
-				<label for="node-config-input-url"><i class="fa fa-link"></i> <span data-i18n="firebase-config.label.url"></span></label>
+			<div class="form-row form-row-url">
+				<label for="node-config-input-url"><i class="fa fa-database"></i> <span data-i18n="firebase-config.label.url"></span></label>
 				<input type="text" id="node-config-input-url" style="width:70%;" data-i18n="[placeholder]firebase-config.placeholder.url" />
 			</div>
 
 			<div class="firebase-text-divider" data-i18n="firebase-config.divider.firestore"></div>
 
 			<div class="form-row">
-				<label for="node-config-input-projectId"><i class="fa fa-link"></i> <span data-i18n="firebase-config.label.projectId"></span></label>
-				<input type="text" id="node-config-input-projectId" style="width:70%;" data-i18n="[placeholder]firebase-config.placeholder.projectId" />
+				<label for="node-config-input-projectId"><i class="fa fa-cloud"></i> <span data-i18n="firebase-config.label.projectId"></span></label>
+				<input type="text" id="node-config-input-projectId" style="width:70%;" data-i18n="[placeholder]firebase-config.placeholder.projectId" disabled/>
 			</div>
 
 			<div class="firebase-text-divider" data-i18n="firebase-config.divider.storage"></div>
 
 			<div class="form-row">
-				<label for="node-config-input-storageBucket"><i class="fa fa-link"></i> <span data-i18n="firebase-config.label.storageBucket"></span></label>
-				<input type="text" id="node-config-input-storageBucket" style="width:70%;" data-i18n="[placeholder]firebase-config.placeholder.storageBucket" />
+				<label for="node-config-input-storageBucket"><i class="fa fa-archive"></i> <span data-i18n="firebase-config.label.storageBucket"></span></label>
+				<input type="text" id="node-config-input-storageBucket" style="width:70%;" data-i18n="[placeholder]firebase-config.placeholder.storageBucket" disabled/>
 			</div>
 		</div>
-	</div>
-
-	<div class="firebase-text-divider" data-i18n="firebase-config.divider.tips"></div>
-
-	<div class="form-tips" id="firebase-config-tips">
-		<div class="login-row login-row-anonymous login-row-email login-row-customToken"><span data-i18n="[html]firebase-config.tips.apiKey"></span></div>
-		<div><span data-i18n="[html]firebase-config.tips.url"></span></div>
-		<div class="login-row login-row-email">
-			<span data-i18n="[html]firebase-config.tips.email"></span>
-			<ul>
-				<li><span data-i18n="[html]firebase-config.tips.emailMethod1"></span></li>
-				<li><span data-i18n="[html]firebase-config.tips.emailMethod2"></span></li>
-			</ul>
-		</div>
-		<div class="login-row login-row-customToken login-row-privateKey"><span data-i18n="[html]firebase-config.tips.json"></span></div>
 	</div>
 </script>
