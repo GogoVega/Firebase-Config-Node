@@ -4,7 +4,7 @@ daysUntilStale: 14
 daysUntilClose: 7
 # Issues with these labels will never be considered stale
 exemptLabels:
-  - fixed-not-merged
+  - fixed
   - never-stale
   - enhancement
 # Label to use when marking an issue as stale

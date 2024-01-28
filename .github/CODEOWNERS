@@ -2,6 +2,7 @@
 *       @GogoVega
 
 # Permission by file type
+*.html  @GogoVega
 *.js    @GogoVega
 *.json  @GogoVega
 *.md    @GogoVega
