@@ -144,12 +144,15 @@ export class Client extends TypedEmitter<ClientEvents> {
 	public async signOut(): Promise<void> {
 		if (this.signState === SignState.NOT_YET) throw new ClientError("signOut called before signIn call");
 		if (this.signState === SignState.SIGN_OUT) throw new ClientError("signOut already called");
-		if (!this._clientInitialised) throw new TypeError("Client to delete missing");
 
-		this._signState = SignState.SIGN_OUT;
-		this.emit("sign-out");
+		// The app is created regardless of whether the client has been initialized
+		// If initialized sign out, otherwise skip
+		if (this._clientInitialised) {
+			this._signState = SignState.SIGN_OUT;
+			this.emit("sign-out");
 
-		if (!this.admin) await signOut(this._auth!);
+			if (!this.admin) await signOut(this._auth!);
+		}
 
 		return this.deleteClient();
 	}

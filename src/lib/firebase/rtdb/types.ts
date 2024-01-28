@@ -87,6 +87,8 @@ export interface Constraint {
 	startAt?: RangeQuery;
 }
 
+export type Priority = number | string;
+
 export type BothDataSnapshot = AdminDataSnapshot | DataSnapshot;
 
 export type DatabaseReference = Reference | Query;

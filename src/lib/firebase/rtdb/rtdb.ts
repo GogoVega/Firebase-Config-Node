@@ -308,6 +308,7 @@ export class RTDB extends RTDBConnection {
 	public subscribe(
 		listener: Listener,
 		callback: SubscribeCallback,
+		errorCallback: (error: Error) => void,
 		path?: string,
 		constraints?: Constraint
 	): Unsubscribe {
@@ -319,18 +320,14 @@ export class RTDB extends RTDBConnection {
 		if (this.isAdmin(this._database)) {
 			const databaseRef = pathParsed ? this._database.ref().child(pathParsed) : this._database.ref();
 
-			const subscription = this.applyQueryConstraints(constraints, databaseRef).on(listener, callback, (error) => {
-				throw error;
-			});
+			const subscription = this.applyQueryConstraints(constraints, databaseRef).on(listener, callback, errorCallback);
 
 			return () => databaseRef.off(listener, subscription);
 		} else {
 			return database[ListenerMap[listener]](
 				query(ref(this._database, pathParsed), ...this.applyQueryConstraints(constraints)),
 				callback,
-				(error: Error) => {
-					throw error;
-				}
+				errorCallback
 			);
 		}
 	}

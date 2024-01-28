@@ -21,6 +21,9 @@ import { LogCallbackParams, onLog } from "../firebase/logger";
 import { RTDB } from "../firebase/rtdb";
 import { firebaseError, nodeStatus } from "./const";
 import { Config, ConfigNode, ConnectionStatus, JSONContentType, ServiceType, StatusListeners } from "./types";
+import { generateIndexOnWarningMsg } from "./utils";
+// To import `toPascalCase`
+require("./utils");
 
 /**
  * Firebase Class
@@ -61,6 +64,13 @@ export class FirebaseClient {
 
 		if (log.message.includes("app/invalid-credential"))
 			return this.onError(new FirebaseError("auth/invalid-credential", ""));
+
+		// Check if indexOn is setted
+		const result = log.message.match(/Consider adding ".indexOn": "([a-z]+)" at \/([a-z/]+) to your security rules/);
+		if (result) {
+			const [childOrValue, path] = result.slice(1);
+			this.node.warn(generateIndexOnWarningMsg(path, childOrValue));
+		}
 	};
 	private statusListeners: StatusListeners = { firestore: [], rtdb: [], storage: [] };
 
@@ -133,9 +143,6 @@ export class FirebaseClient {
 	 * will be closed.
 	 */
 	private enableConnectionHandler() {
-		// For config-node (re)starting (FULL Deploy - NR starting)
-		setImmediate(() => this.destroyUnusedConnection());
-		// For other cases where config-node does not restart (e.g. Modified Nodes Deploy)
 		this.RED.events.on("flows:started", this.onFlowsStarted);
 	}
 
@@ -214,14 +221,26 @@ export class FirebaseClient {
 	}
 
 	private initRTDB() {
-		// Skip if database already instanciate
+		// Skip if database already instanciated
 		if (this.node.rtdb) return;
 		if (!this.node.client?.clientInitialised) return;
 
-		this.node.rtdb = new RTDB(this.node.client);
+		try {
+			this.node.rtdb = new RTDB(this.node.client);
+			this.node.rtdb.onLog(({ level, message }) => this.node[level === "info" ? "log" : level](message));
+			this.node.rtdb.onStatusUpdate((status) => this.updateGlobalStatus(status));
+		} catch (error) {
+			// For fatal error like DB URL missing
+			if (error instanceof Error) {
+				if (
+					error.message.includes("Can't determine Firebase Database URL.") ||
+					error.message.includes("Cannot parse Firebase url")
+				)
+					return this.onError(new FirebaseError("auth/invalid-database-url", ""));
+			}
 
-		this.node.rtdb.onLog(({ level, message }) => this.node[level === "info" ? "log" : level](message));
-		this.node.rtdb.onStatusUpdate((status) => this.updateGlobalStatus(status));
+			this.node.error(error);
+		}
 	}
 
 	/**
@@ -282,12 +301,14 @@ export class FirebaseClient {
 	public logOut(done: () => void) {
 		(async () => {
 			try {
-				if (!this.node.client?.clientInitialised) return done();
+				if (!this.node.client) return done();
 
 				// TODO: Add firestore
 				const rtdbOnline = this.node.rtdb && !this.node.rtdb.offline;
 
 				if (rtdbOnline) this.node.log("Closing connection with Firebase RTDB");
+
+				this.node.rtdb?.removeConnectionState();
 
 				this.disableConnectionHandler();
 				this.disableGlobalLogHandler();
@@ -311,8 +332,8 @@ export class FirebaseClient {
 		const msg = isFirebaseError(error)
 			? firebaseError[error.code.split(".")[0]]
 			: error instanceof Error
-			? error.message || error.toString()
-			: error;
+				? error.message || error.toString()
+				: error;
 		const status = isFirebaseError(error) && /auth\/network-request-failed/.test(error.code) ? "no-network" : "error";
 		const text =
 			isFirebaseError(error) && error.code.startsWith("auth/")
@@ -320,7 +341,7 @@ export class FirebaseClient {
 				: undefined;
 
 		this.updateGlobalStatus(status, text);
-		this.node.error(msg);
+		this.node.error(msg || error);
 	}
 
 	private removeStatusListener(id: string, type: ServiceType, done: () => void) {
@@ -348,10 +369,13 @@ export class FirebaseClient {
 	}
 
 	private setCurrentStatus(id: string) {
-		this.RED.nodes.getNode(id).status(this.globalStatus);
+		this.RED.nodes.getNode(id)?.status(this.globalStatus);
 	}
 
 	private updateGlobalStatus(status: ConnectionStatus, text?: string) {
+		// Keep error message if disconnected message comes
+		if (this.globalStatus.text?.startsWith("Error") && status === "disconnected") return;
+
 		const newGlobalStatus: NodeStatus =
 			status === "error"
 				? { fill: "red", shape: "dot", text: `Error${text ? ": ".concat(text) : ""}` }
@@ -362,7 +386,7 @@ export class FirebaseClient {
 
 		// TODO: Status pour firestore
 		for (const listeners of Object.values(this.statusListeners) as Array<Array<string>>) {
-			listeners.forEach((id) => this.RED.nodes.getNode(id).status(newGlobalStatus));
+			listeners.forEach((id) => this.RED.nodes.getNode(id)?.status(newGlobalStatus));
 		}
 	}
 }

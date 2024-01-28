@@ -38,5 +38,5 @@ type ObjectEntry<T extends object> = T extends object
 export type Entry<T extends object> = T extends readonly [unknown, ...unknown[]]
 	? TupleEntry<T>
 	: T extends ReadonlyArray<infer U>
-	? [`${number}`, U]
-	: ObjectEntry<T>;
+		? [`${number}`, U]
+		: ObjectEntry<T>;

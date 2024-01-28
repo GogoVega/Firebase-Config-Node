@@ -51,6 +51,9 @@ export class RTDBConnection extends Connection {
 	}
 
 	protected subscribeConnectionState(): void {
+		// Caused by nextTick, so check that
+		if (!this._database) return;
+
 		const databaseURL = this._database.app.options.databaseURL;
 
 		this.subscriptionCallback = onValue(
@@ -70,8 +73,8 @@ export class RTDBConnection extends Connection {
 					this._state = this._isOffline
 						? ConnectionState.OFFLINE
 						: this.firstConnectionEtablished
-						? ConnectionState.RE_CONNECTING
-						: ConnectionState.CONNECTING;
+							? ConnectionState.RE_CONNECTING
+							: ConnectionState.CONNECTING;
 
 					if (this.firstConnectionEtablished) {
 						this.emit("disconnect");
