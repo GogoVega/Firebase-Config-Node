@@ -14,7 +14,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/GogoVega/firebase-config-node.git"
+    "url": "git+https://github.com/GogoVega/firebase-config-node.git"
   },
   "keywords": [
     "admin",
