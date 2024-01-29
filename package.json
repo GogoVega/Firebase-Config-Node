@@ -4,7 +4,6 @@
   "description": "Node-RED config node to communicate with Google Firebase",
   "main": "build/index.js",
   "types": "build/index.d.ts",
-  "private": "true",
   "scripts": {
     "build": "tsc",
     "clean": "rimraf build/lib build/{**/,}*.{js,d.ts}",
@@ -60,6 +59,7 @@
   },
   "files": [
     "build/",
+    "resources/",
     "CHANGELOG.md",
     "LICENSE",
     "README.md",
