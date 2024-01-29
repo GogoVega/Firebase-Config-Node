@@ -61,6 +61,18 @@
       "storageBucket": "The name of the Cloud Storage Bucket.",
       "uid": "Uniquely identifies the user or device you are authenticating.",
       "url": "<strong>URL</strong> can be found in the Realtime Database console, this differs by geographic location, the link structure is as follows: <strong>https://&#x3C;project-id&#x3E;-default-rtdb.&#x3C;continent&#x3E;.firebaseddatabase.app/</strong> or ends with <strong>.firebaseio.com</strong> for the United States."
+    },
+    "validators": {
+      "invalid-apiKey": "Must look like AIza... (39 characters) pattern",
+      "invalid-clientEmail": "Must look like service-account@project-id.iam.gserviceaccount.com pattern",
+      "invalid-email": "Doesn't look like a valid email",
+      "invalid-json": "Doesn't look like a valid JSON",
+      "invalid-password": "Password must be at least 6 characters long",
+      "invalid-privateKey": "Must look like -----BEGIN PRIVATE KEY-----<YOUR_KEY>-----END PRIVATE KEY----- pattern",
+      "invalid-projectId": "Must look like a-z - (max 30 characters) pattern",
+      "invalid-storageBucket": "Must look like project-id.appspot.com pattern",
+      "invalid-uid": "Must look like a-z pattern",
+      "invalid-url": "Must look like https://project-id-default-rtdb.europe-west1.firebasedatabase.app/ pattern"
     }
   }
 }

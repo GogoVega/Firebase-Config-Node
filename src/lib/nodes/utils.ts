@@ -30,11 +30,11 @@ String.prototype.toPascalCase = function () {
 
 function generateIndexOnWarningMsg(path: string, child: string) {
 	return `Please add the following to your security rules for better performance:
-  {
-    "${path}": {
-      ".indexOn": "${child}"
-    }
+{
+  "${path}": {
+    ".indexOn": "${child}"
   }
+}
 `;
 }
 

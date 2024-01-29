@@ -224,6 +224,8 @@ export class FirebaseClient {
 		// Skip if database already instanciated
 		if (this.node.rtdb) return;
 		if (!this.node.client?.clientInitialised) return;
+		// TODO: pas l'idéal (comment gérer une mauvaise URL)
+		if (this.statusListeners.rtdb.length > 1) return;
 
 		try {
 			this.node.rtdb = new RTDB(this.node.client);

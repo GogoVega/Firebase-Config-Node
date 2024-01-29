@@ -22,55 +22,55 @@ const FirebaseConfigUI = (function () {
     apiKey: function () {
       return function (value, opt) {
         if (/^AIza[a-zA-Z0-9-_\\]{35}$/.test(value)) return true;
-        return opt ? i18n("invalid.apiKey") : false;
+        return opt ? i18n("invalid-apiKey") : false;
       };
     },
     clientEmail: function () {
       return function (value, opt) {
         if (/^__PWRD__$|^[a-zA-Z0-9-]+\@[a-zA-Z0-9-]{4,30}\.iam\.gserviceaccount\.com$/.test(value)) return true;
-        return opt ? i18n("invalid.apiKey") : false;
+        return opt ? i18n("invalid-clientEmail") : false;
       };
     },
     email: function () {
       return function (value, opt) {
         if (/^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/i.test(value)) return true;
-        return opt ? i18n("invalid.apiKey") : false;
+        return opt ? i18n("invalid-email") : false;
       };
     },
     password: function () {
       return function (value, opt) {
         if (/^.{6,}$/.test(value)) return true;
-        return opt ? i18n("invalid.apiKey") : false;
+        return opt ? i18n("invalid-password") : false;
       };
     },
     privateKey: function () {
       return function (value, opt) {
         if (/^__PWRD__$|-----BEGIN PRIVATE KEY-----\S+-----END PRIVATE KEY-----/.test(value)) return true;
-        return opt ? i18n("invalid.privateKey") : false;
+        return opt ? i18n("invalid-privateKey") : false;
       };
     },
     projectId: function () {
       return function (value, opt) {
         if (/^$|^[a-zA-Z0-9-]{4,30}$/.test(value)) return true;
-        return opt ? i18n("invalid.projectId") : false;
+        return opt ? i18n("invalid-projectId") : false;
       };
     },
     storageBucket: function () {
       return function (value, opt) {
         if (/^$|^[a-zA-Z0-9-]{4,30}\.appspot\.com$/.test(value)) return true;
-        return opt ? i18n("invalid.storageBucket") : false;
+        return opt ? i18n("invalid-storageBucket") : false;
       };
     },
     uid: function () {
       return function (value, opt) {
         if (/^.{1,128}$/.test(value)) return true;
-        return opt ? i18n("invalid.uid") : false;
+        return opt ? i18n("invalid-uid") : false;
       };
     },
     url: function () {
       return function (value, opt) {
         if (/^$|^https:\/\/[a-zA-Z0-9-]{4,30}-default-rtdb\.((asia-southeast1|europe-west1)\.firebasedatabase\.app|firebaseio\.com)\/$/.test(value)) return true;
-        return opt ? i18n("invalid.url") : false;
+        return opt ? i18n("invalid-url") : false;
       };
     },
   };
@@ -78,7 +78,7 @@ const FirebaseConfigUI = (function () {
   function appendTooltipsToAllFields() {
     const inputs = ["apiKey", "clientEmail", "email", "password", "privateKey", "projectId", "storageBucket", "uid", "url", "json"];
 
-    inputs.forEach((name) => generateToolTip(`#node-config-input-${name}`, i18n(`tooltips.${name}`, "firebase-config")));
+    inputs.forEach((name) => generateToolTip(`#node-config-input-${name}`, i18n(`tooltips.${name}`)));
   }
 
   function generateToolTip(element, message) {
