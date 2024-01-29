@@ -375,8 +375,8 @@ export class FirebaseClient {
 	}
 
 	private updateGlobalStatus(status: ConnectionStatus, text?: string) {
-		// Keep error message if disconnected message comes
-		if (this.globalStatus.text?.startsWith("Error") && status === "disconnected") return;
+		// Keep error message if connection message comes
+		if (this.globalStatus.text?.startsWith("Error") && status !== "error") return;
 
 		const newGlobalStatus: NodeStatus =
 			status === "error"
