@@ -1,0 +1,39 @@
+name: Tests
+
+on:
+  push:
+    paths-ignore:
+      - 'docs/**'
+      - 'examples/**'
+  pull_request:
+    branches: [ master, dev ]
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Lint
+        run: npm run lint
+
+      - name: Run Build
+        run: npm run build
+
+      - name: Run Tests
+        run: npm run test
+        env:
+          API_KEY: ${{ secrets.API_KEY }}
+          RTDB_URL: ${{ secrets.RTDB_URL }}
