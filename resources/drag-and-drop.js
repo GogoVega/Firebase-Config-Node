@@ -114,7 +114,8 @@ const FirebaseConfigDropArea = (function () {
         $("#node-config-input-privateKey")
           .data("data", (data["privateKey"] || data["private_key"] || "").trim())
           .val("__PWRD__");
-        $("#node-config-input-projectId").val(data["projectId"] || data["project_id"]);
+        $("#node-config-input-projectId").val(data["projectId"] || data["project_id"])
+          .trigger("change"); // No need to trigger everything
         this.privateKeyFile.html("The file has been loaded.");
       } catch (error) {
         this.privateKeyFile.html("An error has occurred :(");
