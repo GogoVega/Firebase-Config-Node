@@ -16,15 +16,49 @@
  */
 
 import { DataSnapshot as AdminDataSnapshot } from "firebase-admin/database";
-import { BothDataSnapshot } from "./types";
+import { DataSnapshot as BaseDataSnapshot } from "firebase/database";
+import { DataSnapshotType } from "./types";
 
-// TODO: Use custom DataSnapshot class to remove this following
-function isAdminDataSnapshot(dataSnapshot: BothDataSnapshot): dataSnapshot is AdminDataSnapshot {
-	return (
-		dataSnapshot.constructor.name === "DataSnapshot" &&
-		Object.prototype.hasOwnProperty.call(dataSnapshot, "getPriority") &&
-		Object.prototype.hasOwnProperty.call(dataSnapshot, "numChildren")
-	);
+class DataSnapshot implements DataSnapshotType {
+	private data: AdminDataSnapshot | BaseDataSnapshot;
+
+	public static from(data: AdminDataSnapshot | BaseDataSnapshot) {
+		return new DataSnapshot(data);
+	}
+
+	private constructor(data: AdminDataSnapshot | BaseDataSnapshot) {
+		this.data = data;
+	}
+
+	public get priority(): string | number | null {
+		if (Object.prototype.hasOwnProperty.call(this.data, "getPriority"))
+			return (this.data as AdminDataSnapshot).getPriority();
+		return (this.data as BaseDataSnapshot).priority;
+	}
+
+	public get key(): string | null {
+		return this.data.key;
+	}
+
+	public exists(): boolean {
+		return this.data.exists();
+	}
+
+	public hasChild(path: string): boolean {
+		return this.data.hasChild(path);
+	}
+
+	public hasChildren(): boolean {
+		return this.data.hasChildren();
+	}
+
+	public toJSON(): object | null {
+		return this.data.toJSON();
+	}
+
+	public val(): unknown {
+		return this.data.val();
+	}
 }
 
-export { isAdminDataSnapshot };
+export { DataSnapshot };

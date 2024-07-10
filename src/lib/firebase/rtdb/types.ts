@@ -15,8 +15,7 @@
  * limitations under the License.
  */
 
-import { DataSnapshot } from "firebase/database";
-import { DataSnapshot as AdminDataSnapshot, Query, Reference } from "firebase-admin/database";
+import { Query, Reference } from "firebase-admin/database";
 
 export enum ListenerMap {
 	value = "onValue",
@@ -89,11 +88,19 @@ export interface Constraint {
 
 export type Priority = number | string;
 
-export type BothDataSnapshot = AdminDataSnapshot | DataSnapshot;
+export interface DataSnapshotType {
+	exists(): boolean;
+	priority: string | number | null;
+	hasChild(path: string): boolean;
+	hasChildren(): boolean;
+	key: string | null;
+	toJSON(): object | null;
+	val(): unknown;
+}
 
 export type DatabaseReference = Reference | Query;
 
-export type SubscribeCallback = (snapshot: BothDataSnapshot, previousChildName?: string | null) => void;
+export type SubscribeCallback = (snapshot: DataSnapshotType, previousChildName?: string | null) => void;
 export type Unsubscribe = () => void;
 
 export { ServerValue } from "firebase-admin/database";

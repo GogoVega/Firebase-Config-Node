@@ -20,10 +20,11 @@ import { Database, get, goOffline, goOnline, onDisconnect, query, QueryConstrain
 import { Database as AdminDatabase } from "firebase-admin/database";
 import { RTDBConnection } from "./connection";
 import { RTDBError } from "./error";
+import { DataSnapshot } from "./utils";
 import {
-	BothDataSnapshot,
 	Constraint,
 	DatabaseReference,
+	DataSnapshotType,
 	Listener,
 	ListenerMap,
 	OnDisconnectQueryMethod,
@@ -183,16 +184,18 @@ export class RTDB extends RTDBConnection {
 		throw new Error(`Query Method must be one of ${printEnumKeys(QueryMethodMap)}.`);
 	}
 
-	public get(path?: string, constraints?: object): Promise<BothDataSnapshot> {
+	public async get(path?: string, constraints?: object): Promise<DataSnapshotType> {
 		const pathParsed = this.checkPath(path, true);
 
 		if (this.isAdmin(this.database)) {
 			const database = pathParsed ? this.database.ref().child(pathParsed) : this.database.ref();
 
-			return this.applyQueryConstraints(constraints, database).get();
+			return DataSnapshot.from(await this.applyQueryConstraints(constraints, database).get());
 		}
 
-		return get(query(ref(this.database, pathParsed), ...this.applyQueryConstraints(constraints)));
+		return DataSnapshot.from(
+			await get(query(ref(this.database, pathParsed), ...this.applyQueryConstraints(constraints)))
+		);
 	}
 
 	public goOffline() {
@@ -320,13 +323,18 @@ export class RTDB extends RTDBConnection {
 		if (this.isAdmin(this._database)) {
 			const databaseRef = pathParsed ? this._database.ref().child(pathParsed) : this._database.ref();
 
-			const subscription = this.applyQueryConstraints(constraints, databaseRef).on(listener, callback, errorCallback);
+			const subscription = this.applyQueryConstraints(constraints, databaseRef).on(
+				listener,
+				(snapshot, child) => callback(DataSnapshot.from(snapshot), child),
+				errorCallback
+			);
 
 			return () => databaseRef.off(listener, subscription);
 		} else {
 			return database[ListenerMap[listener]](
 				query(ref(this._database, pathParsed), ...this.applyQueryConstraints(constraints)),
-				callback,
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				(snapshot: any, child?: string | null) => callback(DataSnapshot.from(snapshot), child),
 				errorCallback
 			);
 		}
