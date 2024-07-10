@@ -266,6 +266,9 @@ export class FirebaseClient {
 				// No info for now
 				this.node.client.onLog((msg) => msg.level === "warn" && this.node.warn(msg.message));
 
+				// Not ideal but it's common practice for Node-RED
+				this.node.client.setMaxListeners(0);
+
 				// Sign In
 				switch (this.node.config.authType) {
 					case "anonymous":
