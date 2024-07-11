@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-import * as database from "firebase/database";
-import { Database, get, goOffline, goOnline, onDisconnect, query, QueryConstraint, ref } from "firebase/database";
+import * as database from "@firebase/database";
+import { Database, get, goOffline, goOnline, onDisconnect, query, QueryConstraint, ref } from "@firebase/database";
 import { Database as AdminDatabase } from "firebase-admin/database";
 import { RTDBConnection } from "./connection";
 import { RTDBError } from "./error";

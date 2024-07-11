@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { FirebaseApp, FirebaseError } from "firebase/app";
+import { FirebaseApp, FirebaseError } from "@firebase/app";
 import {
 	Auth,
 	UserCredential,
@@ -26,7 +26,7 @@ import {
 	signInWithCustomToken,
 	signInWithEmailAndPassword,
 	signOut,
-} from "firebase/auth";
+} from "@firebase/auth";
 import { App as FirebaseAdminApp, AppOptions, cert } from "firebase-admin/app";
 import { TypedEmitter } from "tiny-typed-emitter";
 import { ClientError } from "./error";

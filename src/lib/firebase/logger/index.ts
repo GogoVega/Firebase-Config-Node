@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-export { onLog } from "firebase/app";
+export { onLog } from "@firebase/app";
 export { LogCallbackParams } from "@firebase/logger/dist/src/logger";
 
 type Level = "info" | "warn";

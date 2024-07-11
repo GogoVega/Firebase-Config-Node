@@ -15,9 +15,9 @@
  * limitations under the License.
  */
 
-import { FirebaseError } from "firebase/app";
+import { FirebaseError } from "@firebase/app";
 
-export { FirebaseError } from "firebase/app";
+export { FirebaseError } from "@firebase/app";
 
 export function isFirebaseError(error: unknown): error is FirebaseError {
 	return (

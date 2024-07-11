@@ -16,7 +16,7 @@
  */
 
 import { DataSnapshot as AdminDataSnapshot } from "firebase-admin/database";
-import { DataSnapshot as BaseDataSnapshot } from "firebase/database";
+import { DataSnapshot as BaseDataSnapshot } from "@firebase/database";
 import { DataSnapshotType } from "./types";
 
 class DataSnapshot implements DataSnapshotType {

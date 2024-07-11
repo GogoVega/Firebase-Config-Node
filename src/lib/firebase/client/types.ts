@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-import { FirebaseOptions } from "firebase/app";
-import { UserCredential } from "firebase/auth";
+import { FirebaseOptions } from "@firebase/app";
+import { UserCredential } from "@firebase/auth";
 import { AppOptions } from "firebase-admin";
 
 export type AppConfig = Omit<AppOptions, "credential" | "serviceAccountId"> | FirebaseOptions;

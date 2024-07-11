@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-import { FirebaseApp } from "firebase/app";
-import { getFirestore, Firestore as Database } from "firebase/firestore";
+import { FirebaseApp } from "@firebase/app";
+import { getFirestore, Firestore as Database } from "@firebase/firestore";
 import { App } from "firebase-admin/app";
 import { getFirestore as adminGetFirestore, Firestore as AdminDatabase } from "firebase-admin/firestore";
 import { FirestoreError } from "./error";
