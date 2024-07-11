@@ -4,7 +4,7 @@ Node-RED config node to communicate with Google Firebase
 
 > [!CAUTION]
 > Work in progress!!!
-> Current State: ALPHA
+> Current State: BETA
 
 This repo will be the **future config node** for the following modules:
 
