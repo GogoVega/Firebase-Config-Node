@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { deleteApp, FirebaseApp, FirebaseOptions, initializeApp } from "firebase/app";
+import { deleteApp, FirebaseApp, FirebaseOptions, initializeApp } from "@firebase/app";
 
 export class App {
 	private _app: FirebaseApp;

@@ -15,9 +15,9 @@
  * limitations under the License.
  */
 
-import { FirebaseApp } from "firebase/app";
+import { FirebaseApp } from "@firebase/app";
 import { App } from "firebase-admin/app";
-import { Database, Unsubscribe, getDatabase, onValue, ref } from "firebase/database";
+import { Database, Unsubscribe, getDatabase, onValue, ref } from "@firebase/database";
 import { Database as AdminDatabase, getDatabase as adminGetDatabase } from "firebase-admin/database";
 import { RTDBError } from "./error";
 import { Connection, ConnectionState } from "../connection";
