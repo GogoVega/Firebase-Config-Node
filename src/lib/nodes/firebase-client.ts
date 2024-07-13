@@ -42,6 +42,7 @@ require("./utils");
  * @returns A FirebaseConfig Class
  */
 export class FirebaseClient {
+	private destroyUCMsgEmitted: boolean = false;
 	private globalStatus: NodeStatus = nodeStatus.disconnected;
 	private onFlowsStarted: () => void = () => this.destroyUnusedConnection();
 	/**
@@ -119,11 +120,13 @@ export class FirebaseClient {
 		const { name } = this.node.config;
 		const { rtdb, firestore } = this.statusListeners;
 
-		if (!rtdb.length && !firestore.length)
+		if (!rtdb.length && !firestore.length && !this.destroyUCMsgEmitted) {
+			this.destroyUCMsgEmitted = true;
 			this.node.warn(`WARNING: '${name}' config node is unused! All connections with Firebase will be closed...`);
+		}
 
 		// TODO: Add firestore
-		if (rtdb.length === 0 && this.node.rtdb) {
+		if (rtdb.length === 0 && this.node.rtdb && !this.node.rtdb.offline) {
 			this.node.rtdb.goOffline();
 			this.node.log("Connection with Firebase RTDB was closed because no node used.");
 		}
