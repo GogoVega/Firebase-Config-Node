@@ -159,13 +159,31 @@ export class FirebaseClient {
 		this.RED.events.on("Firebase:log", this.onLog);
 	}
 
+	/**
+	 * Evaluates a node property value according to its type.
+	 *
+	 * @param value the raw value
+	 * @param type the type of the value
+	 * @return A promise with the evaluted property
+	 */
+	private evaluateNodeProperty(value: string, type: string) {
+		return new Promise((resolve, reject) =>
+			this.RED.util.evaluateNodeProperty(value, type, this.node, {}, (error, result) => {
+				if (error) return reject(error);
+
+				resolve(result);
+			})
+		);
+	}
+
 	private getClaims() {
 		const claims = this.node.config.claims || {};
 
-		return Object.entries(claims).reduce<Record<string, unknown>>((acc, [key, value]) => {
-			acc[key] = value.value;
+		return Object.entries(claims).reduce<Promise<Record<string, unknown>>>(async (accP, [key, value]) => {
+			const acc = await accP;
+			acc[key] = await this.evaluateNodeProperty(value.value, value.type);
 			return acc;
-		}, {});
+		}, Promise.resolve({}));
 	}
 
 	/**
@@ -286,7 +304,7 @@ export class FirebaseClient {
 						break;
 					}
 					case "customToken": {
-						const claims = this.getClaims();
+						const claims = await this.getClaims();
 						const cred = this.getJSONCredentials();
 						const uid = this.node.credentials.uid;
 						await this.node.client.signInWithCustomToken(cred, uid, claims);
