@@ -390,6 +390,7 @@ export class FirebaseClient {
 	 * @remarks This method should only be used if the connection has been destroyed.
 	 */
 	private restoreDestroyedConnection() {
+		this.destroyUCMsgEmitted = false;
 		// TODO: Add firestore
 		if (this.node.rtdb?.offline) this.node.rtdb.goOnline();
 	}
