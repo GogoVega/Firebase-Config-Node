@@ -27,8 +27,8 @@ const FirebaseConfigClaimsContainer = (function () {
 
 				if (typeof claims !== "object") return false;
 
-				// TODO
-				for (const [k, v] of Object.entries(claims)) { }
+				// TODO: validate Claims
+				//for (const [k, v] of Object.entries(claims)) { }
 
 				return true;
 			}
