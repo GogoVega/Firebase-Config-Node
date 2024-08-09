@@ -20,9 +20,15 @@ type AuthType = "anonymous" | "email" | "privateKey" | "customToken";
 
 type ClaimsType = Record<string, { value: string; type: "str" | "num" | "bool" | "date" | "json" }>;
 
+interface NodeStatus {
+	firestore: boolean;
+	storage: boolean;
+}
+
 export type Config = NodeDef & {
 	authType?: AuthType;
 	claims?: ClaimsType;
 	createUser?: boolean;
+	status?: NodeStatus;
 	useClaims?: boolean;
 };

@@ -47,6 +47,7 @@
     "createNewUser": "Create a new user if this one does not exist?",
     "addClaim": "Add Claims Set",
     "useClaims": "Use additional claims to authenticate?",
+    "useStatus": "Use the RTDB connection status?",
     "clickDragHere": "Click or drag the file here.",
     "dropFileHere": "Drop File Here",
     "nothing2complete": "Nothing to complete",

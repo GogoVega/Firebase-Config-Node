@@ -47,6 +47,7 @@
     "createNewUser": "Créer un nouvel utilisateur si celui-ci n'existe pas ?",
     "addClaim": "Ajouter une revendication",
     "useClaims": "Utiliser d'autres revendications pour s'authentifier ?",
+    "useStatus": "Utiliser le statut de connexion de la RTDB ?",
     "clickDragHere": "Cliquer ou faites glisser le fichier ici.",
     "dropFileHere": "Lachez le fichier ici",
     "nothing2complete": "Rien à compléter",
