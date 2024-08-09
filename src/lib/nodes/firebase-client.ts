@@ -232,6 +232,12 @@ export class FirebaseClient {
 	}
 
 	private initDatabase(type: ServiceType) {
+		// Init RTDB for connection status if no Firebase node used
+		if (this.node.config.status?.firestore && !this.statusListeners.rtdb.length) {
+			this.statusListeners.rtdb.push("fake-node-for-status");
+			this.initRTDB();
+		}
+
 		type === "firestore" && this.initFirestore();
 		type === "rtdb" && this.initRTDB();
 	}
@@ -403,7 +409,18 @@ export class FirebaseClient {
 	}
 
 	private setCurrentStatus(id: string) {
-		this.RED.nodes.getNode(id)?.status(this.globalStatus);
+		const { rtdb, firestore, storage } = this.statusListeners;
+
+		// If the database has no connection state, need to clear the status to avoid keeping the default status
+		if (
+			rtdb.includes(id) ||
+			(firestore.includes(id) && this.node.config.status?.firestore) ||
+			(storage.includes(id) && this.node.config.status?.storage)
+		) {
+			this.RED.nodes.getNode(id)?.status(this.globalStatus);
+		} else {
+			this.RED.nodes.getNode(id)?.status({});
+		}
 	}
 
 	private updateGlobalStatus(status: ConnectionStatus, text?: string) {
@@ -418,9 +435,17 @@ export class FirebaseClient {
 		// Save the status
 		this.globalStatus = newGlobalStatus;
 
-		// TODO: Status pour firestore
-		for (const listeners of Object.values(this.statusListeners) as Array<Array<string>>) {
-			listeners.forEach((id) => this.RED.nodes.getNode(id)?.status(newGlobalStatus));
+		const nodes = this.statusListeners.rtdb;
+
+		// Add status to Firestore and Storage nodes
+		// Transmit status to all nodes if it's an error
+		if (this.node.config.status?.firestore || status === "error") {
+			nodes.push(...this.statusListeners.firestore);
 		}
+		if (this.node.config.status?.storage || status === "error") {
+			nodes.push(...this.statusListeners.storage);
+		}
+
+		nodes.forEach((id) => this.RED.nodes.getNode(id)?.status(newGlobalStatus));
 	}
 }

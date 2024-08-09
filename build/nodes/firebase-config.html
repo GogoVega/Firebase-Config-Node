@@ -56,6 +56,7 @@
 				},
 				claims: { value: {}, label: i18n("label.claims"), validate: validateClaims() },
 				createUser: { value: false },
+				status: { value: { firestore: false, storage: false } },
 				useClaims: { value: false },
 			},
 			label: function () {
@@ -66,6 +67,9 @@
 
 				dropTarget.create();
 				editableClaimsList.build(this);
+
+				$("#node-config-input-firestore-status").prop("checked", this.status?.firestore || false);
+				$("#node-config-input-storage-status").prop("checked", this.status?.storage || false);
 
 				const authType = $("#node-config-input-authType");
 				const claimsContainer = $("#node-config-input-claims-container");
@@ -107,6 +111,11 @@
 
 				this.credentials.clientEmail = clientEmail.data("data") || clientEmail.val();
 				this.credentials.privateKey = privateKey.data("data") || privateKey.val();
+
+				const firestoreStatus = $("#node-config-input-firestore-status").prop("checked");
+				const storageStatus = $("#node-config-input-storage-status").prop("checked");
+
+				this.status = { firestore: firestoreStatus, storage: storageStatus };
 
 				editableClaimsList.saveItems();
 			},
@@ -239,7 +248,13 @@
 
 			<div class="form-row">
 				<label for="node-config-input-projectId"><i class="fa fa-cloud"></i> <span data-i18n="firebase-config.label.projectId"></span></label>
-				<input type="text" id="node-config-input-projectId" style="width:70%;" data-i18n="[placeholder]firebase-config.placeholder.projectId" disabled/>
+				<input type="text" id="node-config-input-projectId" style="width:70%;" data-i18n="[placeholder]firebase-config.placeholder.projectId"/>
+			</div>
+
+			<div class="form-row">
+				<label for="node-config-input-firestore-status"></label>
+				<input type="checkbox" id="node-config-input-firestore-status" style="display:inline-block; width:15px; vertical-align:baseline;" />
+				<span data-i18n="firebase-config.useStatus">
 			</div>
 
 			<div class="firebase-text-divider" data-i18n="firebase-config.divider.storage"></div>
@@ -247,6 +262,12 @@
 			<div class="form-row">
 				<label for="node-config-input-storageBucket"><i class="fa fa-archive"></i> <span data-i18n="firebase-config.label.storageBucket"></span></label>
 				<input type="text" id="node-config-input-storageBucket" style="width:70%;" data-i18n="[placeholder]firebase-config.placeholder.storageBucket" disabled/>
+			</div>
+
+			<div class="form-row">
+				<label for="node-config-input-storage-status"></label>
+				<input type="checkbox" id="node-config-input-storage-status" style="display:inline-block; width:15px; vertical-align:baseline;" />
+				<span data-i18n="firebase-config.useStatus">
 			</div>
 		</div>
 	</div>
