@@ -67,8 +67,8 @@ export class RTDBConnection extends Connection {
 					this._state = ConnectionState.CONNECTED;
 					this.firstConnectionEtablished = true;
 					this.emit("connected");
-					this.updateStatus && this.updateStatus("connected");
-					this.log && this.log(`Connected to Firebase RTDB: ${databaseURL}`);
+					if (this.updateStatus) this.updateStatus("connected");
+					if (this.log) this.log(`Connected to Firebase RTDB: ${databaseURL}`);
 				} else {
 					this._state = this._isOffline
 						? ConnectionState.OFFLINE
@@ -78,7 +78,7 @@ export class RTDBConnection extends Connection {
 
 					if (this.firstConnectionEtablished) {
 						this.emit("disconnect");
-						this.updateStatus && this.updateStatus("disconnect");
+						if (this.updateStatus) this.updateStatus("disconnect");
 					}
 
 					if (this.client.signState === SignState.SIGN_OUT || this._isOffline) return;
@@ -87,13 +87,13 @@ export class RTDBConnection extends Connection {
 					this.timeoutID = setTimeout(() => {
 						this._state = ConnectionState.DISCONNECTED;
 						this.emit("disconnected");
-						this.updateStatus && this.updateStatus("disconnected");
+						if (this.updateStatus) this.updateStatus("disconnected");
 					}, 30000);
 
 					this.emit(this.firstConnectionEtablished ? "re-connecting" : "connecting");
-					this.updateStatus && this.updateStatus(this.firstConnectionEtablished ? "re-connecting" : "connecting");
+					if (this.updateStatus) this.updateStatus(this.firstConnectionEtablished ? "re-connecting" : "connecting");
 
-					this.log &&
+					if (this.log)
 						this.log(`${this.firstConnectionEtablished ? "Re-c" : "C"}onnecting to Firebase RTDB: ${databaseURL}`);
 				}
 			},

@@ -113,10 +113,11 @@ export class Client extends TypedEmitter<ClientEvents> {
 			if (method.length === 0 && createUser) {
 				const user = await createUserWithEmailAndPassword(this._auth as Auth, email, password);
 
-				this.warn &&
+				if (this.warn) {
 					this.warn(
 						`The user "${email}" has been successfully created. You can delete it in the Authenticate section if it is an error.`
 					);
+				}
 
 				return user;
 			} else if (method.includes("password")) {

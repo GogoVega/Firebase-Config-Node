@@ -200,13 +200,21 @@ export class RTDB extends RTDBConnection {
 
 	public goOffline() {
 		this._isOffline = true;
-		this._database instanceof Database ? goOffline(this._database) : this._database.goOffline();
+		if (this._database instanceof Database) {
+			goOffline(this._database);
+		} else {
+			this._database.goOffline();
+		}
 		this.removeConnectionState();
 	}
 
 	public goOnline() {
 		this._isOffline = false;
-		this._database instanceof Database ? goOnline(this._database) : this._database.goOnline();
+		if (this._database instanceof Database) {
+			goOnline(this._database);
+		} else {
+			this._database.goOnline();
+		}
 		this.subscribeConnectionState();
 	}
 

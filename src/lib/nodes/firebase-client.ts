@@ -23,6 +23,7 @@ import { firebaseError, nodeStatus } from "./const";
 import { Config, ConfigNode, ConnectionStatus, JSONContentType, ServiceType, StatusListeners } from "./types";
 import { generateIndexOnWarningMsg } from "./utils";
 // To import `toPascalCase`
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 require("./utils");
 
 /**
@@ -238,8 +239,11 @@ export class FirebaseClient {
 			this.initRTDB();
 		}
 
-		type === "firestore" && this.initFirestore();
-		type === "rtdb" && this.initRTDB();
+		if (type === "firestore") {
+			this.initFirestore();
+		} else if (type === "rtdb") {
+			this.initRTDB();
+		}
 	}
 
 	private initFirestore() {
