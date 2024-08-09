@@ -9,7 +9,7 @@ Node-RED config node to communicate with Google Firebase
 This repo will be the **future config node** for the following modules:
 
 - RTDB: [@gogovega/node-red-contrib-firebase-realtime-database](https://github.com/GogoVega/node-red-contrib-firebase-realtime-database)
-- Firestore: @gogovega/node-red-contrib-firestore: **Not yet developed**
+- Firestore: [@gogovega/node-red-contrib-cloud-firestore](https://github.com/GogoVega/node-red-contrib-cloud-firestore)
 - Cloud Storage: @gogovega/node-red-contrib-cloud-storage: **Not yet developed**
 
 Of coure, you can use it for your own module.
