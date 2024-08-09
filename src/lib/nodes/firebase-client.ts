@@ -125,10 +125,14 @@ export class FirebaseClient {
 			this.node.warn(`WARNING: '${name}' config node is unused! All connections with Firebase will be closed...`);
 		}
 
-		// TODO: Add firestore
 		if (rtdb.length === 0 && this.node.rtdb && !this.node.rtdb.offline) {
 			this.node.rtdb.goOffline();
 			this.node.log("Connection with Firebase RTDB was closed because no node used.");
+		}
+
+		if (firestore.length === 0 && this.node.firestore && !this.node.firestore.offline) {
+			this.node.firestore.goOffline();
+			this.node.log("Connection with Firestore was closed because no node used.");
 		}
 	}
 
@@ -331,9 +335,12 @@ export class FirebaseClient {
 
 				// TODO: Add firestore
 				const rtdbOnline = this.node.rtdb && !this.node.rtdb.offline;
+				const firestoreOnline = this.node.firestore && !this.node.firestore.offline;
 
 				if (rtdbOnline) this.node.log("Closing connection with Firebase RTDB");
+				if (firestoreOnline) this.node.log("Closing connection with Firestore");
 
+				// Only RTDB has connection state
 				this.node.rtdb?.removeConnectionState();
 
 				this.disableConnectionHandler();
@@ -391,8 +398,8 @@ export class FirebaseClient {
 	 */
 	private restoreDestroyedConnection() {
 		this.destroyUCMsgEmitted = false;
-		// TODO: Add firestore
-		if (this.node.rtdb?.offline) this.node.rtdb.goOnline();
+		if (this.node.rtdb?.offline && this.statusListeners.rtdb) this.node.rtdb.goOnline();
+		if (this.node.firestore?.offline && this.statusListeners.firestore) this.node.firestore.goOnline();
 	}
 
 	private setCurrentStatus(id: string) {
