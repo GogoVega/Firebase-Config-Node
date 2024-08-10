@@ -21,6 +21,7 @@
     "config",
     "database",
     "firebase",
+    "firestore",
     "node-red",
     "realtime"
   ],
