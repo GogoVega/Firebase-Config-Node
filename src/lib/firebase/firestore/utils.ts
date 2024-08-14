@@ -108,6 +108,9 @@ function applyQueryConstraints(constraints: Constraint = {}, query?: AdminQuery)
 				}
 				break;
 			case "orderBy":
+				if (typeof value.fieldPath !== "string")
+					throw new TypeError(`The fieldPath value of the "${method}" constraint must be a string!`);
+
 				if (query) {
 					query.orderBy(value.fieldPath, value.direction);
 				} else {
@@ -115,13 +118,20 @@ function applyQueryConstraints(constraints: Constraint = {}, query?: AdminQuery)
 				}
 				break;
 			case "select":
-				if (query) {
-					query.select(...value);
+				if (typeof value === "string" || (typeof value === "object" && value && Array.isArray(value))) {
+					if (query) {
+						query.select(...value);
+					} else {
+						throw new Error("Select Query Constraint not available for this SDK.");
+					}
 				} else {
-					throw new Error("Select Query Constraint not available for this SDK.");
+					throw new TypeError(`The value of the "${method}" constraint must be a string or a string array!`);
 				}
 				break;
 			case "where":
+				if (typeof value.fieldPath !== "string")
+					throw new TypeError(`The fieldPath value of the "${method}" constraint must be a string!`);
+
 				if (query) {
 					query.where(value.fieldPath, value.filter, value.value);
 				} else {
@@ -283,6 +293,8 @@ class SpecialFieldValue {
 	}
 
 	public geoPoint(latitude: number, longitude: number) {
+		if (typeof latitude !== "number" || typeof longitude !== "number")
+			throw new TypeError("Latitude and Longitude of Geo Point must be a number");
 		if (this.admin) return new AdminGeoPoint(latitude, longitude);
 		return new GeoPoint(latitude, longitude);
 	}
