@@ -1,6 +1,6 @@
 # Change log
 
-## 0.1.0-beta.1
+## 0.1.0
 
 ### Changes
 
@@ -11,6 +11,6 @@
 
 - Add `get`, `modify` and `subscribe` methods to Firestore (#6)
 
-## 0.0.1-beta.2
+## 0.0.1
 
 Initial version
