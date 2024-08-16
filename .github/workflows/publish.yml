@@ -27,6 +27,10 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
+      # Ensure the version is up to date
+      - name: Update the Config Node version
+        run: node ./scripts/update-config-node-version.js
+
       - name: Build
         run: npm run build
 
