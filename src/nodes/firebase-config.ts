@@ -18,7 +18,7 @@ import { NodeAPI } from "node-red";
 import { FirebaseClient } from "../lib/nodes/firebase-client";
 import { Config, ConfigNode } from "../lib/nodes/types";
 
-const VERSION = "0.0.1-alpha.1";
+const VERSION = "0.1.0";
 
 export default function (RED: NodeAPI) {
 	/**
@@ -40,14 +40,14 @@ export default function (RED: NodeAPI) {
 		client.logIn();
 
 		this.on("close", (done: () => void) => client.logOut(done));
-	}
 
-	Object.defineProperty(FirebaseConfigNode, "version", {
-		value: VERSION,
-		writable: false,
-		enumerable: true,
-		configurable: false,
-	});
+		Object.defineProperty(this, "version", {
+			value: VERSION,
+			writable: false,
+			enumerable: true,
+			configurable: false,
+		});
+	}
 
 	RED.nodes.registerType("firebase-config", FirebaseConfigNode, {
 		credentials: {
