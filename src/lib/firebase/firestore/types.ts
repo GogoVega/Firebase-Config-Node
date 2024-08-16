@@ -44,12 +44,12 @@ export interface Constraint {
 	endBefore?: unknown;
 	limitToFirst?: number;
 	limitToLast?: number;
-	orderBy?: { fieldPath: string; direction?: OrderByDirection };
+	orderBy?: Array<{ fieldPath: string; direction?: OrderByDirection }>;
 	offset?: number;
 	select?: string | Array<string>;
 	startAfter?: unknown;
 	startAt?: unknown;
-	where?: { fieldPath: string; filter: WhereFilterOp; value: unknown };
+	where?: Array<{ fieldPath: string; filter: WhereFilterOp; value: unknown }>;
 }
 
 export interface QueryConfig {

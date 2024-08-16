@@ -107,16 +107,27 @@ function applyQueryConstraints(constraints: Constraint = {}, query?: AdminQuery)
 					throw new Error("Offset Query Constraint not available for this SDK.");
 				}
 				break;
-			case "orderBy":
-				if (typeof value.fieldPath !== "string")
-					throw new TypeError(`The fieldPath value of the "${method}" constraint must be a string!`);
+			case "orderBy": {
+				if (typeof value !== "object") throw new TypeError(`The value of the "${method}" constraint must be an array!`);
 
-				if (query) {
-					query.orderBy(value.fieldPath, value.direction);
-				} else {
-					queryConstraints.push(orderBy(value.fieldPath, value.direction));
+				let valArray = value;
+				if (!Array.isArray(value)) {
+					valArray = [value];
 				}
+
+				valArray.forEach((val) => {
+					if (typeof val.fieldPath !== "string")
+						throw new TypeError(`The fieldPath value of the "${method}" constraint must be a string!`);
+
+					if (query) {
+						query.orderBy(val.fieldPath, val.direction);
+					} else {
+						queryConstraints.push(orderBy(val.fieldPath, val.direction));
+					}
+				});
+
 				break;
+			}
 			case "select":
 				if (typeof value === "string" || (typeof value === "object" && value && Array.isArray(value))) {
 					if (query) {
@@ -128,16 +139,27 @@ function applyQueryConstraints(constraints: Constraint = {}, query?: AdminQuery)
 					throw new TypeError(`The value of the "${method}" constraint must be a string or a string array!`);
 				}
 				break;
-			case "where":
-				if (typeof value.fieldPath !== "string")
-					throw new TypeError(`The fieldPath value of the "${method}" constraint must be a string!`);
+			case "where": {
+				if (typeof value !== "object") throw new TypeError(`The value of the "${method}" constraint must be an array!`);
 
-				if (query) {
-					query.where(value.fieldPath, value.filter, value.value);
-				} else {
-					queryConstraints.push(where(value.fieldPath, value.filter, value.value));
+				let valArray = value;
+				if (!Array.isArray(value)) {
+					valArray = [value];
 				}
+
+				valArray.forEach((val) => {
+					if (typeof val.fieldPath !== "string")
+						throw new TypeError(`The fieldPath value of the "${method}" constraint must be a string!`);
+
+					if (query) {
+						query.where(val.fieldPath, val.filter, val.value);
+					} else {
+						queryConstraints.push(where(val.fieldPath, val.filter, val.value));
+					}
+				});
+
 				break;
+			}
 			default:
 				continue;
 		}
@@ -311,3 +333,4 @@ class SpecialFieldValue {
 }
 
 export { applyQueryConstraints, documentFrom, queryFrom, Snapshot, SpecialFieldValue };
+//export { FieldValue } from "firebase-admin/firestore"
