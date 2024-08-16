@@ -333,4 +333,3 @@ class SpecialFieldValue {
 }
 
 export { applyQueryConstraints, documentFrom, queryFrom, Snapshot, SpecialFieldValue };
-//export { FieldValue } from "firebase-admin/firestore"
