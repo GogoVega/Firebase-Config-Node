@@ -1,5 +1,11 @@
 # Change log
 
+## 0.1.2
+
+### Fixes
+
+- Fix Promise resolution when closing the Config Node (#10)
+
 ## 0.1.1
 
 ### Changes
