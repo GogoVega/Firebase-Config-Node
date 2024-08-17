@@ -155,7 +155,13 @@ export class Client extends TypedEmitter<ClientEvents> {
 			if (!this.admin) await signOut(this._auth!);
 		}
 
-		return this.deleteClient();
+		if (this.admin) {
+			await this.deleteClient();
+		} else {
+			// https://github.com/firebase/firebase-js-sdk/issues/7816
+			// TODO: The promise is not resolved due to a bug in Node. Workaround for now to not wait for it anymore.
+			this.deleteClient();
+		}
 	}
 
 	private async wrapSignIn(config: AppOptions): Promise<void>;
