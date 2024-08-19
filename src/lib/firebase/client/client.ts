@@ -20,7 +20,6 @@ import {
 	Auth,
 	UserCredential,
 	createUserWithEmailAndPassword,
-	fetchSignInMethodsForEmail,
 	getAuth,
 	signInAnonymously,
 	signInWithCustomToken,
@@ -107,23 +106,32 @@ export class Client extends TypedEmitter<ClientEvents> {
 		createUser?: boolean
 	): Promise<UserCredential> {
 		return this.wrapSignIn(async () => {
-			// Checks if the user already has an account otherwise it creates one
-			const method = await fetchSignInMethodsForEmail(this._auth as Auth, email);
-
-			if (method.length === 0 && createUser) {
-				const user = await createUserWithEmailAndPassword(this._auth as Auth, email, password);
-
-				if (this.warn) {
-					this.warn(
-						`The user "${email}" has been successfully created. You can delete it in the Authenticate section if it is an error.`
-					);
+			try {
+				// Try to sign in
+				const user = await signInWithEmailAndPassword(this._auth as Auth, email, password);
+				return user;
+			} catch (error) {
+				if (error instanceof FirebaseError && error.code === "auth/wrong-password") {
+					throw error;
 				}
 
-				return user;
-			} else if (method.includes("password")) {
-				return signInWithEmailAndPassword(this._auth as Auth, email, password);
-			} else {
-				throw new FirebaseError("auth/unknown-email", "Unknown email");
+				if (error instanceof FirebaseError && error.code === "auth/user-not-found") {
+					if (!createUser) {
+						throw new FirebaseError("auth/unknown-email", "Unknown email");
+					}
+
+					const user = await createUserWithEmailAndPassword(this._auth as Auth, email, password);
+
+					if (this.warn) {
+						this.warn(
+							`The user "${email}" has been successfully created. You can delete it in the Authenticate section if it is an error.`
+						);
+					}
+
+					return user;
+				}
+
+				throw error;
 			}
 		});
 	}
