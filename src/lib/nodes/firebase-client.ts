@@ -362,6 +362,7 @@ export class FirebaseClient {
 			} catch (error) {
 				// done(error) not yet supported for close event
 				this.node.error(error);
+				done();
 			}
 		})();
 	}
@@ -399,6 +400,7 @@ export class FirebaseClient {
 		} catch (error) {
 			// done(error) not yet supported for close event
 			this.node.error(error);
+			done();
 		}
 	}
 
