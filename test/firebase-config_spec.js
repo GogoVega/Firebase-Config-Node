@@ -16,6 +16,7 @@
 
 const database = require("../build");
 const { Client } = require("../build/lib/firebase/client");
+const { Firestore } = require("../build/lib/firebase/firestore");
 const { RTDB } = require("../build/lib/firebase/rtdb");
 
 const helper = require("node-red-node-test-helper");
@@ -23,6 +24,7 @@ const should = require('should');
 
 const apiKey = process.env.API_KEY;
 const url = process.env.RTDB_URL;
+const projectId = process.env.PROJECT_ID;
 
 // TODO: Add more tests
 describe("Firebase Config Node", function () {
@@ -154,9 +156,9 @@ describe("Firebase Config Node", function () {
   });
 
   context("When the database is used", () => {
-    const creds = { apiKey: apiKey, url: url };
+    const creds = { apiKey: apiKey, url: url, projectId: projectId };
 
-    it("should have initialised the rtdb", function (done) {
+    it("should have initialised the RTDB", function (done) {
       const flow = [{ id: "database", type: "firebase-config", name: "My Database", authType: "anonymous" }];
 
       helper.load([database], flow, { "database": creds }, function () {
@@ -168,6 +170,48 @@ describe("Firebase Config Node", function () {
 
           n1.rtdb.should.be.Object();
           n1.rtdb.should.be.instanceOf(RTDB);
+
+          done();
+        } catch (error) {
+          done(error);
+        }
+      });
+    });
+
+    it("should have initialised Firestore", function (done) {
+      const flow = [{ id: "database", type: "firebase-config", name: "My Database", authType: "anonymous" }];
+
+      helper.load([database], flow, { "database": creds }, function () {
+        try {
+          const n1 = helper.getNode("database");
+
+          n1.addStatusListener("fake-node", "firestore");
+          n1.addStatusListener.should.have.been.called;
+
+          n1.firestore.should.be.Object();
+          n1.firestore.should.be.instanceOf(Firestore);
+
+          done();
+        } catch (error) {
+          done(error);
+        }
+      });
+    });
+
+    it("should have initialised both RTDB and Firestore", function (done) {
+      const flow = [{ id: "database", type: "firebase-config", name: "My Database", authType: "anonymous", status: { firestore: true } }];
+
+      helper.load([database], flow, { "database": creds }, function () {
+        try {
+          const n1 = helper.getNode("database");
+
+          n1.addStatusListener("fake-node", "firestore");
+          n1.addStatusListener.should.have.been.called;
+
+          n1.rtdb.should.be.Object();
+          n1.rtdb.should.be.instanceOf(RTDB);
+          n1.firestore.should.be.Object();
+          n1.firestore.should.be.instanceOf(Firestore);
 
           done();
         } catch (error) {
@@ -232,6 +276,28 @@ describe("Firebase Config Node", function () {
 
             done();
           });
+        } catch (error) {
+          done(error);
+        }
+      });
+    });
+  });
+
+  context("When the config-node is closed", function () {
+    it("should signOut and delete App", function (done) {
+      const flow = [{ id: "database", type: "firebase-config", name: "My Database", authType: "anonymous" }];
+
+      helper.load([database], flow, function () {
+        try {
+          const n1 = helper.getNode("database");
+
+          n1.close(true)
+            .then(() => {
+              n1.client.signOut.should.have.been.called;
+              n1.client._app.deleteApp.should.have.been.called;
+              done();
+            })
+            .catch((error) => done(error));
         } catch (error) {
           done(error);
         }
