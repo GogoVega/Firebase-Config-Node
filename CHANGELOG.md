@@ -1,5 +1,15 @@
 # Change log
 
+## 0.1.3
+
+### Changes
+
+- Remove the deprecated `fetchSignInMethodsForEmail` function (#11)
+
+### Fixes
+
+- Missing call to `done` in the catch while closing the node
+
 ## 0.1.2
 
 ### Fixes
