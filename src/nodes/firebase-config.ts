@@ -18,7 +18,7 @@ import { NodeAPI } from "node-red";
 import { FirebaseClient } from "../lib/nodes/firebase-client";
 import { Config, ConfigNode } from "../lib/nodes/types";
 
-const VERSION = "0.1.3";
+const VERSION = "0.1.4";
 
 export default function (RED: NodeAPI) {
 	/**

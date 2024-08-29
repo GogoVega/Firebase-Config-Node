@@ -1,5 +1,12 @@
 # Change log
 
+## 0.1.4
+
+### Changes
+
+- Bump dependencies to latest
+  - Removed an unnecessary `console.log` statement
+
 ## 0.1.3
 
 ### Changes
