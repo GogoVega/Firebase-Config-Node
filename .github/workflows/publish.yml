@@ -38,4 +38,5 @@ jobs:
         uses: JS-DevTools/npm-publish@v3
         with:
           access: public
+          tag: ${{ contains(github.ref, '-beta') && 'beta' || contains(github.ref, '-alpha') && 'alpha' || 'latest' }}
           token: ${{ secrets.NPM_TOKEN }}
