@@ -1,5 +1,11 @@
 # Change log
 
+## 0.1.5
+
+### Changes
+
+- Bump dependencies to latest
+
 ## 0.1.4
 
 ### Changes
