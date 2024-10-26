@@ -1,5 +1,17 @@
 # Change log
 
+## 0.2.0
+
+### Breaking Changes
+
+- Set required version of Node.js to >=18
+- Set required version of Node-RED to >=3
+
+### Changes
+
+- Only don't wait signout for Firestore and add a safety delay (#12)
+- Bump dependencies to latest
+
 ## 0.1.5
 
 ### Changes
