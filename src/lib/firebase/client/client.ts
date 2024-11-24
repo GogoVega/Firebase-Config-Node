@@ -154,16 +154,16 @@ export class Client extends TypedEmitter<ClientEvents> {
 		if (this.signState === SignState.NOT_YET) throw new ClientError("signOut called before signIn call");
 		if (this.signState === SignState.SIGN_OUT) throw new ClientError("signOut already called");
 
-		// The app is created regardless of whether the client has been initialized
-		// If initialized sign out, otherwise skip
+		// Ensure the app has been created to signout and delete it
 		if (this._clientInitialised) {
 			this._signState = SignState.SIGN_OUT;
 			this.emit("sign-out");
 
-			if (!this.admin) await signOut(this._auth!);
-		}
+			// Admin SDK has no signOut method - internally called during deleteApp
+			if (!this.admin && this._auth) await signOut(this._auth);
 
-		return this.deleteClient();
+			return this.deleteClient();
+		}
 	}
 
 	private async wrapSignIn(config: AppOptions): Promise<void>;
@@ -182,8 +182,8 @@ export class Client extends TypedEmitter<ClientEvents> {
 			this._signState = SignState.SIGN_IN;
 			this.emit("sign-in");
 			this._app = admin ? new AdminApp(config, this.appName) : new App(this.appConfig, this.appName);
-			this._auth = admin ? undefined : getAuth(this._app.app as FirebaseApp);
 			this._clientInitialised = true;
+			this._auth = admin ? undefined : getAuth(this._app.app as FirebaseApp);
 			const user = await signInFn();
 			this._signState = SignState.SIGNED_IN;
 			success = true;

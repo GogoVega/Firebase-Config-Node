@@ -249,6 +249,7 @@ export class FirebaseClient {
 	private initFirestore() {
 		// Skip if database already instanciate
 		if (this.node.firestore) return;
+		// Skip if the client is not initialised
 		if (!this.node.client?.clientInitialised) return;
 
 		// TODO: Add log
@@ -258,6 +259,7 @@ export class FirebaseClient {
 	private initRTDB() {
 		// Skip if database already instanciated
 		if (this.node.rtdb) return;
+		// Skip if the client is not initialised
 		if (!this.node.client?.clientInitialised) return;
 		// TODO: pas l'idéal (comment gérer une mauvaise URL)
 		if (this.statusListeners.rtdb.length > 1) return;
@@ -341,7 +343,11 @@ export class FirebaseClient {
 	public logOut(done: () => void) {
 		(async () => {
 			try {
-				if (!this.node.client) return done();
+				this.disableConnectionHandler();
+				this.disableGlobalLogHandler();
+
+				// Do not signout if the client is not initialized
+				if (!this.node.client?.clientInitialised) return done();
 
 				const rtdbOnline = this.node.rtdb && !this.node.rtdb.offline;
 				const firestoreOnline = this.node.firestore && !this.node.firestore.offline;
@@ -352,9 +358,6 @@ export class FirebaseClient {
 				// Only RTDB has connection state
 				this.node.rtdb?.removeConnectionState();
 
-				this.disableConnectionHandler();
-				this.disableGlobalLogHandler();
-
 				if (!this.node.client.admin && this.node.firestore) {
 					// https://github.com/firebase/firebase-js-sdk/issues/7816
 					// TODO: The promise is not resolved due to a bug in Node.
@@ -362,7 +365,7 @@ export class FirebaseClient {
 					this.node.client.signOut();
 
 					// Small delay to ensure deployments won't cause any issues.
-					await new Promise((resolve) => setTimeout(resolve, 1500));
+					await new Promise((resolve) => setTimeout(resolve, 1000));
 				} else {
 					await this.node.client.signOut();
 				}
