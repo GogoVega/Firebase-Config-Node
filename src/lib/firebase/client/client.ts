@@ -155,7 +155,7 @@ export class Client extends TypedEmitter<ClientEvents> {
 		if (this.signState === SignState.SIGN_OUT) throw new ClientError("signOut already called");
 
 		// Ensure the app has been created to signout and delete it
-		if (this._clientInitialised) {
+		if (this._app) {
 			this._signState = SignState.SIGN_OUT;
 			this.emit("sign-out");
 
@@ -181,13 +181,35 @@ export class Client extends TypedEmitter<ClientEvents> {
 		try {
 			this._signState = SignState.SIGN_IN;
 			this.emit("sign-in");
-			this._app = admin ? new AdminApp(config, this.appName) : new App(this.appConfig, this.appName);
-			this._clientInitialised = true;
-			this._auth = admin ? undefined : getAuth(this._app.app as FirebaseApp);
-			const user = await signInFn();
-			this._signState = SignState.SIGNED_IN;
-			success = true;
-			return user;
+
+			if (!admin) {
+				// Initialize the app
+				this._app = new App(this.appConfig, this.appName);
+
+				// Validate the API Key
+				this._auth = getAuth(this._app.app);
+
+				// The client is ready to init DB
+				this._clientInitialised = true;
+
+				// Starting sign in
+				const user = await signInFn();
+
+				// Signed in
+				this._signState = SignState.SIGNED_IN;
+				success = true;
+				return user;
+			} else {
+				// Initialize the app and sign in
+				this._app = new AdminApp(config, this.appName);
+
+				// The client is ready to init DB
+				this._clientInitialised = true;
+
+				// Signed in
+				this._signState = SignState.SIGNED_IN;
+				success = true;
+			}
 		} finally {
 			if (!success) this._signState = SignState.ERROR;
 			this.emit(success ? "signed-in" : "sign-in-error");

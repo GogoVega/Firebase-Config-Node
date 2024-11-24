@@ -343,11 +343,13 @@ export class FirebaseClient {
 	public logOut(done: () => void) {
 		(async () => {
 			try {
+				// Remove listeners
 				this.disableConnectionHandler();
 				this.disableGlobalLogHandler();
 
-				// Do not signout if the client is not initialized
-				if (!this.node.client?.clientInitialised) return done();
+				// Skip logout if the app has not been created
+				if (!this.node.client) return done();
+				if (!this.node.client.app) return done();
 
 				const rtdbOnline = this.node.rtdb && !this.node.rtdb.offline;
 				const firestoreOnline = this.node.firestore && !this.node.firestore.offline;
