@@ -204,26 +204,26 @@ export class FirebaseClient {
 
 		if (Object.keys(content).length === 0) {
 			const { credentials } = this.node;
+
+			// Get the projectId from URL (v < 0.6)
 			const projectId = credentials.url
 				?.split("https://")
 				.pop()
 				?.split(/-default-rtdb\.((asia-southeast1|europe-west1)\.firebasedatabase\.app|firebaseio\.com)(\/)?$/)[0];
 
-			// For line breaks issue
+			// For line breaks issue (v < 0.6)
 			const privateKey = JSON.stringify(credentials.privateKey)
 				?.replace(/\\\\n/gm, "\n")
 				.replaceAll('"', "")
 				.replaceAll("\\", "");
 
-			cred.clientEmail = credentials.clientEmail;
-
 			// The introduction of 'projectId' in the credentials also introduces the change from 'val()' to 'data("data")'
 			// which no longer needs to be stringify to solve the line breaks issue
-			cred.privateKey = privateKey.match("\n") === null ? credentials.privateKey : privateKey;
+			cred.privateKey = privateKey?.match("\n") === null ? credentials.privateKey : privateKey;
 			cred.projectId = credentials.projectId || projectId;
-
-			// For json input (deprecated)
+			cred.clientEmail = credentials.clientEmail;
 		} else {
+			// For json input (deprecated)
 			cred.clientEmail = content.clientEmail || content.client_email;
 			cred.privateKey = content.privateKey || content.private_key;
 			cred.projectId = content.projectId || content.project_id;

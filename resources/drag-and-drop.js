@@ -105,20 +105,35 @@ const FirebaseConfigDropArea = (function () {
     }
 
     #parseAndUpdateInputs(content) {
+      // Remove previous class - default style
+      this.privateKeyFile.removeClass("json-error").removeClass("json-properties-error");
+
       try {
         const data = JSON.parse(content);
+        const clientEmail = data["clientEmail"] || data["client_email"] || "";
+        const privateKey = data["privateKey"] || data["private_key"] || "";
+
+        if (!clientEmail || !privateKey) {
+          RED.notify(`JSON file: '${privateKey ? "Client Email" : "Private Key"}' property missing.`, "error");
+          this.privateKeyFile
+            .addClass("json-properties-error")
+            .html("<p>Please ensure your JSON file contains the <code>clientEmail</code> and <code>privateKey</code> properties.</p>");
+          return;
+        }
 
         $("#node-config-input-clientEmail")
-          .data("data", data["clientEmail"] || data["client_email"])
+          .data("data", clientEmail)
           .val("__PWRD__");
         $("#node-config-input-privateKey")
-          .data("data", (data["privateKey"] || data["private_key"] || "").trim())
+          .data("data", privateKey.trim())
           .val("__PWRD__");
-        $("#node-config-input-projectId").val(data["projectId"] || data["project_id"])
+        $("#node-config-input-projectId")
+          .val(data["projectId"] || data["project_id"])
           .trigger("change"); // No need to trigger everything
+
         this.privateKeyFile.html("The file has been loaded.");
       } catch (error) {
-        this.privateKeyFile.html("An error has occurred :(");
+        this.privateKeyFile.addClass("json-error").html("An error has occurred :(");
         alert(error.message ?? String(error));
       }
     }
