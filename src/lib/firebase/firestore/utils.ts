@@ -74,7 +74,7 @@ function applyQueryConstraints(constraints: Constraint = {}, query?: AdminQuery)
 				const firestore = { endAt, endBefore, startAfter, startAt };
 
 				if (query) {
-					query[method](value);
+					query = query[method](value);
 				} else {
 					queryConstraints.push(firestore[method](value));
 				}
@@ -84,7 +84,7 @@ function applyQueryConstraints(constraints: Constraint = {}, query?: AdminQuery)
 				if (typeof value !== "number") throw new TypeError(`The value of the "${method}" constraint must be a number!`);
 
 				if (query) {
-					query.limit(value);
+					query = query.limit(value);
 				} else {
 					queryConstraints.push(limit(value));
 				}
@@ -93,7 +93,7 @@ function applyQueryConstraints(constraints: Constraint = {}, query?: AdminQuery)
 				if (typeof value !== "number") throw new TypeError(`The value of the "${method}" constraint must be a number!`);
 
 				if (query) {
-					query.limitToLast(value);
+					query = query.limitToLast(value);
 				} else {
 					queryConstraints.push(limitToLast(value));
 				}
@@ -102,7 +102,7 @@ function applyQueryConstraints(constraints: Constraint = {}, query?: AdminQuery)
 				if (typeof value !== "number") throw new TypeError(`The value of the "${method}" constraint must be a number!`);
 
 				if (query) {
-					query.offset(value);
+					query = query.offset(value);
 				} else {
 					throw new Error("Offset Query Constraint not available for this SDK.");
 				}
@@ -120,7 +120,7 @@ function applyQueryConstraints(constraints: Constraint = {}, query?: AdminQuery)
 						throw new TypeError(`The fieldPath value of the "${method}" constraint must be a string!`);
 
 					if (query) {
-						query.orderBy(val.fieldPath, val.direction);
+						query = query.orderBy(val.fieldPath, val.direction);
 					} else {
 						queryConstraints.push(orderBy(val.fieldPath, val.direction));
 					}
@@ -131,7 +131,7 @@ function applyQueryConstraints(constraints: Constraint = {}, query?: AdminQuery)
 			case "select":
 				if (typeof value === "string" || (typeof value === "object" && value && Array.isArray(value))) {
 					if (query) {
-						query.select(...value);
+						query = query.select(...value);
 					} else {
 						throw new Error("Select Query Constraint not available for this SDK.");
 					}
@@ -152,7 +152,7 @@ function applyQueryConstraints(constraints: Constraint = {}, query?: AdminQuery)
 						throw new TypeError(`The fieldPath value of the "${method}" constraint must be a string!`);
 
 					if (query) {
-						query.where(val.fieldPath, val.filter, val.value);
+						query = query.where(val.fieldPath, val.filter, val.value);
 					} else {
 						queryConstraints.push(where(val.fieldPath, val.filter, val.value));
 					}
