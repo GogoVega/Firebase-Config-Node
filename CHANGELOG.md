@@ -7,12 +7,12 @@
 - Add some guards to prevent unexpected UI error
 - Bump dependencies to latest
 
-## Fixes
+### Fixes
 
 - Do not call signout if app initialization failed (#15)
 - Fix bad Query object returned by applyQueryConstraints (#16)
 
-## Improvements
+### Improvements
 
 - Handle drag and drop of a JSON file with missing properties (#14)
 
