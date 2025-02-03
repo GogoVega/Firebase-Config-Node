@@ -1,5 +1,21 @@
 # Change log
 
+## 0.2.1
+
+### Changes
+
+- Add some guards to prevent unexpected UI error
+- Bump dependencies to latest
+
+## Fixes
+
+- Do not call signout if app initialization failed (#15)
+- Fix bad Query object returned by applyQueryConstraints (#16)
+
+## Improvements
+
+- Handle drag and drop of a JSON file with missing properties (#14)
+
 ## 0.2.0
 
 ### Breaking Changes
