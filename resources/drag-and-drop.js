@@ -95,6 +95,8 @@ const FirebaseConfigDropArea = (function () {
 
     // Read Data
     #saveFile(file) {
+      if (!file) return;
+
       const name = file.name.toLowerCase();
       const reader = new FileReader();
 

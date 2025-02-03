@@ -113,7 +113,7 @@ const FirebaseConfigClaimsContainer = (function () {
 
 			node.claims = {};
 
-			container.each(function () {
+			container?.each(function () {
 				const key = $(this).find("#node-config-input-claims-key").typedInput("value");
 				const value = $(this).find("#node-config-input-claims-value").typedInput("value");
 				const type = $(this).find("#node-config-input-claims-value").typedInput("type");
