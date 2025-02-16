@@ -26,18 +26,20 @@ import {
 	signInWithEmailAndPassword,
 	signOut,
 } from "@firebase/auth";
-import { App as FirebaseAdminApp, AppOptions, cert } from "firebase-admin/app";
+import { App as FirebaseAdminApp, AppOptions, cert, GoogleOAuthAccessToken, ServiceAccount } from "firebase-admin/app";
+import { Auth as AdminAuth, getAuth as adminGetAuth } from "firebase-admin/auth";
 import { TypedEmitter } from "tiny-typed-emitter";
 import { ClientError } from "./error";
 import { AppConfig, ClientEvents, Credentials, SignInFn, SignState } from "./types";
-import { checkJSONCredential, createCustomToken } from "./utils";
+import { checkJSONCredential, createCustomToken, getAccessToken } from "./utils";
 import { AdminApp, App } from "../app";
 import { LogCallback, LogFn } from "../logger";
 
 export class Client extends TypedEmitter<ClientEvents> {
 	private _app?: AdminApp | App;
-	private _auth?: Auth;
+	private _auth?: AdminAuth | Auth;
 	private _clientInitialised: boolean = false;
+	private _serviceAccount?: ServiceAccount;
 	private _signState: SignState = SignState.NOT_YET;
 	private warn: LogFn | null = null;
 
@@ -54,6 +56,10 @@ export class Client extends TypedEmitter<ClientEvents> {
 
 	public get app(): FirebaseApp | FirebaseAdminApp | undefined {
 		return this._app?.app;
+	}
+
+	public get auth(): AdminAuth | Auth | undefined {
+		return this._auth;
 	}
 
 	public get clientDeleted(): boolean | undefined {
@@ -87,6 +93,13 @@ export class Client extends TypedEmitter<ClientEvents> {
 		if (this._app.deleted === true) throw new ClientError("Client already deleted");
 
 		return this._app.deleteApp();
+	}
+
+	public getAccessToken(): Promise<GoogleOAuthAccessToken> {
+		if (!this._clientInitialised) throw new ClientError("getAccessToken called before signIn call");
+		if (!this._app || !this._app.admin) throw new ClientError("getAccessToken is only allowed for Admin client");
+		if (!this._serviceAccount) throw new ClientError("ServiceAccount missing to call getAccessToken");
+		return getAccessToken(this._serviceAccount);
 	}
 
 	public signInAnonymously(): Promise<UserCredential> {
@@ -137,7 +150,8 @@ export class Client extends TypedEmitter<ClientEvents> {
 	}
 
 	public signInWithPrivateKey(projectId: string, clientEmail: string, privateKey: string): Promise<void> {
-		const credential = { credential: cert(checkJSONCredential({ clientEmail, privateKey, projectId })) };
+		this._serviceAccount = checkJSONCredential({ clientEmail, privateKey, projectId });
+		const credential = { credential: cert(this._serviceAccount) };
 		return this.wrapSignIn({ ...this.appConfig, ...credential });
 	}
 
@@ -160,7 +174,7 @@ export class Client extends TypedEmitter<ClientEvents> {
 			this.emit("sign-out");
 
 			// Admin SDK has no signOut method - internally called during deleteApp
-			if (!this.admin && this._auth) await signOut(this._auth);
+			if (!this.admin && this._auth) await signOut(this._auth as Auth);
 
 			return this.deleteClient();
 		}
@@ -202,6 +216,8 @@ export class Client extends TypedEmitter<ClientEvents> {
 			} else {
 				// Initialize the app and sign in
 				this._app = new AdminApp(config, this.appName);
+
+				this._auth = adminGetAuth(this._app.app);
 
 				// The client is ready to init DB
 				this._clientInitialised = true;

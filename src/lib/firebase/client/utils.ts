@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { ServiceAccount, cert } from "firebase-admin/app";
+import { GoogleOAuthAccessToken, ServiceAccount, cert } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 import { claimsNotAllowed } from "./constants";
 import { Credentials, ServiceAccountId } from "./types";
@@ -56,4 +56,8 @@ async function createCustomToken(cred: Credentials, uid: string, claims?: object
 	return token;
 }
 
-export { checkJSONCredential, createCustomToken };
+function getAccessToken(serviceAccount: ServiceAccount): Promise<GoogleOAuthAccessToken> {
+	return cert(checkJSONCredential(serviceAccount)).getAccessToken();
+}
+
+export { checkJSONCredential, createCustomToken, getAccessToken };

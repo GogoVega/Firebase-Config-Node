@@ -13,12 +13,14 @@
       "projectId": "Project ID",
       "storageBucket": "Bucket",
       "uid": "UID",
-      "url": "URL"
+      "url": "URL",
+      "writeSizeLimit": "Write size limit"
     },
     "tabs": {
       "connection": "Connection",
       "security": "Security",
-      "databases": "Databases"
+      "databases": "Databases",
+      "settings": "Settings"
     },
     "divider": {
       "authMethod": "Authentication Method",
@@ -51,6 +53,7 @@
     "clickDragHere": "Click or drag the file here.",
     "dropFileHere": "Drop File Here",
     "nothing2complete": "Nothing to complete",
+    "saveSetting": "Save setting",
     "tooltips": {
       "apiKey": "<strong>API Key</strong> can be found in the project settings.",
       "clientEmail": "<strong>Client Email</strong> can be found in the JSON file, it is the <strong>client_email</strong> field.",
