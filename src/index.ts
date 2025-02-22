@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import firebaseConfig from "./nodes/firebase-config";
+
 export * from "./nodes/firebase-config";
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-module.exports = require("./nodes/firebase-config").default;
+
+module.exports = firebaseConfig;
