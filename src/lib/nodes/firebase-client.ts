@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { NodeAPI, NodeStatus } from "node-red";
+import { Node, NodeAPI, NodeStatus } from "node-red";
 import { Client, FirebaseError, isFirebaseError, ServiceAccount, SignState } from "../firebase/client";
 import { Firestore } from "../firebase/firestore";
 import { LogCallbackParams, onLog } from "../firebase/logger";
@@ -90,10 +90,15 @@ export class FirebaseClient {
 		this.enableConnectionHandler();
 	}
 
-	private addStatusListener(id: string, type: ServiceType) {
-		this.statusListeners[type].push(id);
-		// the node does not yet exist at this step => getNode returns null
-		setImmediate(() => this.setCurrentStatus(id));
+	private addStatusListener(nodeOrId: Node | string, type: ServiceType) {
+		this.statusListeners[type].push(nodeOrId);
+
+		if (typeof nodeOrId === "string") {
+			setImmediate(() => this.setCurrentStatus(nodeOrId));
+		} else {
+			this.setCurrentStatus(nodeOrId);
+		}
+
 		this.restoreDestroyedConnection();
 		this.initDatabase(type);
 	}
@@ -261,7 +266,6 @@ export class FirebaseClient {
 		if (this.node.rtdb) return;
 		// Skip if the client is not initialised
 		if (!this.node.client?.clientInitialised) return;
-		// TODO: pas l'idéal (comment gérer une mauvaise URL)
 		if (this.statusListeners.rtdb.length > 1) return;
 
 		try {
@@ -402,12 +406,12 @@ export class FirebaseClient {
 		this.node.error(msg || error);
 	}
 
-	private removeStatusListener(id: string, type: ServiceType, done: () => void) {
+	private removeStatusListener(nodeOrId: Node | string, type: ServiceType, done: () => void) {
 		try {
 			const nodes = this.statusListeners[type];
 
-			// Remove id from array
-			const indexToRemove = nodes.indexOf(id);
+			// Remove node from array
+			const indexToRemove = nodes.indexOf(nodeOrId);
 			if (indexToRemove !== -1) nodes.splice(indexToRemove, 1);
 
 			done();
@@ -428,22 +432,26 @@ export class FirebaseClient {
 		if (this.node.firestore?.offline && this.statusListeners.firestore) this.node.firestore.goOnline();
 	}
 
-	private setCurrentStatus(id: string) {
+	private setCurrentStatus(nodeOrId: Node | string) {
 		const { rtdb, firestore, storage } = this.statusListeners;
+		const node = typeof nodeOrId === "string" ? this.RED.nodes.getNode(nodeOrId) : nodeOrId;
 
 		// If the database has no connection state, need to clear the status to avoid keeping the default status
 		if (
-			rtdb.includes(id) ||
-			(firestore.includes(id) && this.node.config.status?.firestore) ||
-			(storage.includes(id) && this.node.config.status?.storage)
+			this.globalStatus.text?.startsWith("Error") ||
+			rtdb.includes(nodeOrId) ||
+			(firestore.includes(nodeOrId) && this.node.config.status?.firestore) ||
+			(storage.includes(nodeOrId) && this.node.config.status?.storage)
 		) {
-			this.RED.nodes.getNode(id)?.status(this.globalStatus);
+			node?.status(this.globalStatus);
 		} else {
-			this.RED.nodes.getNode(id)?.status({});
+			node?.status({});
 		}
 	}
 
 	private updateGlobalStatus(status: ConnectionStatus, text?: string) {
+		this.node.debug(`Update global status to: ${status} with the message: ${text}`);
+
 		// Keep error message if connection message comes
 		if (this.globalStatus.text?.startsWith("Error") && status !== "error") return;
 
@@ -466,6 +474,9 @@ export class FirebaseClient {
 			nodes.push(...this.statusListeners.storage);
 		}
 
-		nodes.forEach((id) => this.RED.nodes.getNode(id)?.status(newGlobalStatus));
+		nodes.forEach((nodeOrId) => {
+			if (typeof nodeOrId === "string") this.RED.nodes.getNode(nodeOrId)?.status(newGlobalStatus);
+			else nodeOrId.status(newGlobalStatus);
+		});
 	}
 }

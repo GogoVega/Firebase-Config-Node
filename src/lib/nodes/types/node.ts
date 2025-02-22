@@ -39,7 +39,7 @@ export type ConnectionStatus =
 	| "error"
 	| "no-network"
 	| "re-connecting";
-export type StatusListeners = Record<ServiceType, Array<string>>;
+export type StatusListeners = Record<ServiceType, Array<Node | string>>;
 
 type Credentials = {
 	apiKey: string;
@@ -62,21 +62,56 @@ type Credentials = {
 export type ConfigNode = Node & {
 	/**
 	 * Add this node to the Global Configuration Node
+	 * @deprecated
 	 * @param id The node ID
 	 * @param type The Service Type
 	 */
 	addStatusListener(id: string, type: ServiceType): void;
+	/**
+	 * Add this node to the Global Configuration Node
+	 * @param node The node
+	 * @param type The Service Type
+	 */
+	addStatusListener(node: Node, type: ServiceType): void;
 	client?: Client;
 	clientSignedIn(): Promise<boolean>;
 	config: Config;
 	credentials: Credentials;
+	/**
+	 * Class representing a Cloud Firestore Database.
+	 * Must be instantiated by calling {@link ConfigNode.addStatusListener | addStatusListener}
+	 */
 	firestore?: Firestore;
+	/**
+	 * Remove this node from the Global Configuration Node
+	 * @deprecated
+	 * @param id The node ID
+	 * @param type The Service Type
+	 */
 	removeStatusListener(id: string, type: ServiceType, done: () => void): void;
+	/**
+	 * Remove this node from the Global Configuration Node
+	 * @param node The node
+	 * @param type The Service Type
+	 */
+	removeStatusListener(node: Node, type: ServiceType, done: () => void): void;
 	/**
 	 * Class representing a Firebase Realtime Database.
 	 * Must be instantiated by calling {@link ConfigNode.addStatusListener | addStatusListener}
 	 */
 	rtdb?: RTDB;
+	/**
+	 * Set the global status to this node
+	 * @deprecated
+	 * @param id The node ID
+	 * @param type The Service Type
+	 */
 	setCurrentStatus(id: string): void;
+	/**
+	 * Set the global status to this node
+	 * @param node The node
+	 * @param type The Service Type
+	 */
+	setCurrentStatus(node: Node): void;
 	readonly version: string;
 };
