@@ -87,12 +87,14 @@ export type ConfigNode = Node & {
 	 * @deprecated
 	 * @param id The node ID
 	 * @param type The Service Type
+	 * @param done Callback
 	 */
 	removeStatusListener(id: string, type: ServiceType, done: () => void): void;
 	/**
 	 * Remove this node from the Global Configuration Node
 	 * @param node The node
 	 * @param type The Service Type
+	 * @param done Callback
 	 */
 	removeStatusListener(node: Node, type: ServiceType, done: () => void): void;
 	/**
@@ -104,13 +106,11 @@ export type ConfigNode = Node & {
 	 * Set the global status to this node
 	 * @deprecated
 	 * @param id The node ID
-	 * @param type The Service Type
 	 */
 	setCurrentStatus(id: string): void;
 	/**
 	 * Set the global status to this node
 	 * @param node The node
-	 * @param type The Service Type
 	 */
 	setCurrentStatus(node: Node): void;
 	readonly version: string;
