@@ -96,7 +96,7 @@ module.exports = function (RED) {
     const configNode = RED.nodes.getNode(config.database);
 
     // Init the RTDB and subscribe to the communication status
-    configNode.addStatusListener(this.id, "rtdb");
+    configNode.addStatusListener(this, "rtdb");
 
     // The RTDB reference instance
     const rtdb = configNode.rtdb.database;
@@ -113,7 +113,7 @@ module.exports = function (RED) {
     });
 
     // Unsubscribe the communication status
-    this.on("close", (done) => configNode.removeStatusListener(done));
+    this.on("close", (done) => configNode.removeStatusListener(this, "rtdb", done));
   }
 
   RED.nodes.registerType("my-firebase-node", MyFirebaseNode);
