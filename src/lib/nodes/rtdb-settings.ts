@@ -75,14 +75,13 @@ async function updateDatabaseSettings(RED: NodeAPI, got: typeof import("got").go
 		const url = `${databaseURL}.settings/${path}.json`;
 		const writeSizeLimit = req.body.writeSizeLimit;
 
-		const response = await got.post(url, {
+		await got.put(url, {
 			headers: { Authorization: `Bearer ${token?.access_token}` },
 			body: JSON.stringify(writeSizeLimit),
 			responseType: "json",
 		});
 
-		res.status(200);
-		console.log(response.body);
+		res.sendStatus(200);
 	} catch (error) {
 		res.status(500).send({ message: String(error) });
 		RED.log.error("An error occured while setting RTDB settings: ");

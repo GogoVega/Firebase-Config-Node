@@ -95,6 +95,7 @@
 					],
 				});
 
+				const node = this;
 				let popover = null;
 				const sizeLimitButton = $("#node-config-button-defaultWriteSizeLimit");
 				sizeLimitButton.on("click", function (event) {
@@ -104,8 +105,7 @@
 					if ($(this).attr("disabled")) return;
 					$(this).attr("disabled", true);
 
-					const that = this;
-					$.post(`firebase/config-node/rtdb/settings/${this.id}`, { writeSizeLimit: sizeLimitInput.val() })
+					$.post(`firebase/config-node/rtdb/settings/${node.id}`, { writeSizeLimit: sizeLimitInput.val() })
 						.then(function () {
 							RED.notify("Successfully updated RTDB settings", "success");
 						})
@@ -114,7 +114,7 @@
 							RED.notify("Failed to update RTDB settings", "error");
 						})
 						.always(function () {
-							$(that).attr("disabled", false);
+							sizeLimitButton.attr("disabled", false);
 						});
 				});
 
@@ -125,8 +125,8 @@
 						popover?.delete();
 						popover = null;
 
-						$.getJSON(`firebase/config-node/rtdb/settings/${this.id}`, function (response) {
-							sizeLimitInput.typedInput("value", response.defaultWriteSizeLimit);
+						$.getJSON(`firebase/config-node/rtdb/settings/${node.id}`, function (response) {
+							sizeLimitInput.typedInput("value", response.defaultWriteSizeLimit || "large");
 						});
 					} else if (popover) {
 						sizeLimitButton.attr("disabled", true);
