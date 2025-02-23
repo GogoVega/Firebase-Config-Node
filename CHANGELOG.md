@@ -1,5 +1,16 @@
 # Change log
 
+## 0.2.2
+
+### Changes
+
+- Allow `statusListener` to accept node instance instead of id (#19)
+- Bump dependencies to latest
+
+### Enhances
+
+- Allow UI to set the RTDB `defaultWriteSizeLimit` setting (#18)
+
 ## 0.2.1
 
 ### Changes
