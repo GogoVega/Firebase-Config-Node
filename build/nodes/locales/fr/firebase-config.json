@@ -13,12 +13,14 @@
       "projectId": "ID Projet",
       "storageBucket": "Bucket",
       "uid": "UID",
-      "url": "URL"
+      "url": "URL",
+      "writeSizeLimit": "Taille max d'écriture"
     },
     "tabs": {
       "connection": "Connexion",
       "security": "Sécurité",
-      "databases": "Base de données"
+      "databases": "Base de données",
+      "settings": "Paramètres"
     },
     "divider": {
       "authMethod": "Méthode d'authentification",
@@ -51,6 +53,7 @@
     "clickDragHere": "Cliquer ou faites glisser le fichier ici.",
     "dropFileHere": "Lachez le fichier ici",
     "nothing2complete": "Rien à compléter",
+    "saveSetting": "Enregistrer le paramètre",
     "tooltips": {
       "apiKey": "La <strong>Clé API</strong> se trouve dans les paramètres du projet.",
       "clientEmail": "L'<strong>Email Client</strong> peut être trouvée dans la console Firebase, dans la section <strong>Paramètres du projet</strong>, cliquez sur <strong>Comptes de service</strong> puis sur <strong>Clés de compte de service</strong>. L'adresse e-mail est affichée dans la colonne <strong>Adresse e-mail</strong>.",

@@ -80,6 +80,63 @@
 				// deprecated
 				$("#node-config-input-json").typedInput({ default: "json", types: ["json"] });
 
+				const timeMap = { small: 10, medium: 30, large: 60 };
+				const sizeLimitInput = $("#node-config-input-defaultWriteSizeLimit");
+				sizeLimitInput.typedInput({
+					type: "size",
+					types: [
+						{
+							value: "size", // TODO: i18n
+							options: ["small", "medium", "large", "unlimited"].map((o) => ({
+								value: o,
+								label: o + (timeMap[o] ? ` (${timeMap[o]}s)` : ""),
+							})),
+						},
+					],
+				});
+
+				const node = this;
+				let popover = null;
+				const sizeLimitButton = $("#node-config-button-defaultWriteSizeLimit");
+				sizeLimitButton.on("click", function (event) {
+					event.preventDefault();
+					event.stopPropagation();
+
+					if ($(this).attr("disabled")) return;
+					$(this).attr("disabled", true);
+
+					$.post(`firebase/config-node/rtdb/settings/${node.id}`, { writeSizeLimit: sizeLimitInput.val() })
+						.then(function () {
+							RED.notify("Successfully updated RTDB settings", "success");
+						})
+						.fail(function (error) {
+							console.warn(error.statusText, error.responseText);
+							RED.notify("Failed to update RTDB settings", "error");
+						})
+						.always(function () {
+							sizeLimitButton.attr("disabled", false);
+						});
+				});
+
+				const msg = "Only available with PrivateKey authentication";
+				authType.on("change", function () {
+					if (authType.val() === "privateKey") {
+						sizeLimitButton.attr("disabled", false);
+						popover?.delete();
+						popover = null;
+
+						$.getJSON(`firebase/config-node/rtdb/settings/${node.id}`, function (response) {
+							sizeLimitInput.typedInput("value", response.defaultWriteSizeLimit || "large");
+						});
+					} else if (popover) {
+						sizeLimitButton.attr("disabled", true);
+						popover.setContent(msg);
+					} else {
+						sizeLimitButton.attr("disabled", true);
+						popover = RED.popover.tooltip(sizeLimitButton, msg);
+					}
+				});
+
 				const tabs = RED.tabs.create({
 					id: "node-config-firebase-tabs",
 					onchange: function (tab) {
@@ -101,6 +158,11 @@
 				tabs.addTab({
 					id: "firebase-tab-databases",
 					label: this._("firebase-config.tabs.databases"),
+				});
+
+				tabs.addTab({
+					id: "firebase-tab-settings",
+					label: this._("firebase-config.tabs.settings"),
 				});
 
 				tabs.activateTab("firebase-tab-connection");
@@ -268,6 +330,22 @@
 				<label for="node-config-input-storage-status"></label>
 				<input type="checkbox" id="node-config-input-storage-status" style="display:inline-block; width:15px; vertical-align:baseline;" />
 				<span data-i18n="firebase-config.useStatus">
+			</div>
+		</div>
+
+		<!-- Settings Tab -->
+		<div id="firebase-tab-settings" style="display:none;">
+			<div class="firebase-text-divider" data-i18n="firebase-config.divider.rtdb"></div>
+
+			<div class="form-row" style="display: flex; align-items: center;">
+				<label for="node-config-input-defaultWriteSizeLimit"><i class="fa fa-cogs"></i> <span data-i18n="firebase-config.label.writeSizeLimit"></span></label>
+				<div style="width: 70%; display: inline-flex; align-items: center;">
+					<div style="flex-grow: 1;">
+						<input id="node-config-input-defaultWriteSizeLimit" style="width: 100%;"/>
+					</div>
+					<button id="node-config-button-defaultWriteSizeLimit" class="red-ui-button red-ui-button-small" style="width: auto; margin-left: 10px;"><span data-i18n="firebase-config.saveSetting"></span></button>
+				</div>
+				<div title="Link to Firebase documentation" style="margin-left: 10px;"><a href="https://firebase.google.com/docs/reference/rest/database?hl=en-us#section-param-writesizelimit"><i class="fa fa-external-link-square"></i></a></div>
 			</div>
 		</div>
 	</div>

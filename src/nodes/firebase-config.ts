@@ -15,12 +15,13 @@
  */
 
 import { NodeAPI } from "node-red";
+import { getDatabaseSettings, updateDatabaseSettings } from "../lib/nodes/rtdb-settings";
 import { FirebaseClient } from "../lib/nodes/firebase-client";
 import { Config, ConfigNode } from "../lib/nodes/types";
 
 const VERSION = "0.2.1";
 
-export default function (RED: NodeAPI) {
+export default async function (RED: NodeAPI) {
 	/**
 	 * Firebase Configuration Node
 	 *
@@ -63,4 +64,21 @@ export default function (RED: NodeAPI) {
 			url: { type: "text" },
 		},
 	});
+
+	// Got need a dynamic import due to ESM
+	// Dynamic imports are transpiled when module is CommonJS
+	// https://github.com/microsoft/TypeScript/issues/43329
+	const got = (await new Function("return import('got')")()).got;
+
+	RED.httpAdmin.get(
+		"/firebase/config-node/rtdb/settings/:id",
+		RED.auth.needsPermission("firebase-config.write"),
+		(req, res) => getDatabaseSettings(RED, got, req, res)
+	);
+
+	RED.httpAdmin.post(
+		"/firebase/config-node/rtdb/settings/:id",
+		RED.auth.needsPermission("firebase-config.write"),
+		(req, res) => updateDatabaseSettings(RED, got, req, res)
+	);
 }
