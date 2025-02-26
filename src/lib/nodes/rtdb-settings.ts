@@ -29,12 +29,18 @@ async function getDatabaseSettings(RED: NodeAPI, got: typeof import("got").got, 
 		}
 
 		const node = RED.nodes.getNode(id) as ConfigNode | null;
-		if (!node || !isFirebaseConfigNode(node) || !node.client) {
+		if (!node || !isFirebaseConfigNode(node)) {
+			// Disabled or not yet deployed
 			res.json({});
 			return;
 		}
 
 		const databaseURL = node.credentials.url;
+		if (!node.client?.admin || !databaseURL) {
+			res.json({});
+			return;
+		}
+
 		const token = await node.client.getAccessToken();
 
 		const path = encodeURI(req.body.path || "defaultWriteSizeLimit");
