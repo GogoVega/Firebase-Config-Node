@@ -76,7 +76,8 @@
       "invalid-projectId": "Must look like a-z - (max 30 characters) pattern",
       "invalid-storageBucket": "Must look like project-id.appspot.com pattern",
       "invalid-uid": "Must look like a-z pattern",
-      "invalid-url": "Must look like https://project-id-default-rtdb.europe-west1.firebasedatabase.app/ pattern"
+      "invalid-url": "Must look like https://project-id-default-rtdb.europe-west1.firebasedatabase.app/ pattern",
+      "missing-url": "URL missing to use RTDB status"
     }
   }
 }

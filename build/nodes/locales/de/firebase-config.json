@@ -38,7 +38,7 @@
     "useClaims": "Verwende zusätzliche claims zur Authentifizierung?",
     "clickDragHere": "Klicke oder Ziehe die Datei hier her.",
     "dropFileHere": "Datei hier ablegen",
-    "tips": {
+    "tooltips": {
       "apiKey": "<strong>API Schlüssel</strong> kann in den Projekteinstellungen gefunden werden.",
       "email": "Wenn sie bereits einen Firebase Benutzer mit einer Email Adresse und Passwort erstellt haben tragen sie die Anmeldedaten hier ein.\nAndernfalls können sie einen der folgenden zwei Wege wählen:",
       "emailMethod1": "Gehen sie zu Firebase in die <strong>Authentifizierungs</strong> Sektion und Klicken sie auf \"Benutzer hinzufügen\". Tragen Sie dann ihre Anmeldedaten in den Konfigurationsnode ein.",

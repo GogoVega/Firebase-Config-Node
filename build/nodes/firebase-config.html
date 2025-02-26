@@ -32,6 +32,11 @@
 		const { dropTarget } = FirebaseConfigDropArea;
 		const i18n = (key) => FirebaseConfigUI._(key, "firebase-config");
 
+		const changeHandler = function () {
+			// Trigger the validation
+			$("#node-config-input-url").trigger("change");
+		};
+
 		RED.nodes.registerType("firebase-config", {
 			category: "config",
 			paletteLabel: "Firebase Config",
@@ -68,8 +73,13 @@
 				dropTarget.create();
 				editableClaimsList.build(this);
 
-				$("#node-config-input-firestore-status").prop("checked", this.status?.firestore || false);
-				$("#node-config-input-storage-status").prop("checked", this.status?.storage || false);
+				$("#node-config-input-firestore-status")
+					.on("change", changeHandler)
+					.prop("checked", this.status?.firestore || false);
+
+				$("#node-config-input-storage-status")
+					.on("change", changeHandler)
+					.prop("checked", this.status?.storage || false);
 
 				const authType = $("#node-config-input-authType");
 				const claimsContainer = $("#node-config-input-claims-container");

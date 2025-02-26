@@ -69,6 +69,11 @@ const FirebaseConfigUI = (function () {
     },
     url: function () {
       return function (value, opt) {
+        if (!value) {
+          const firestoreStatus = $("#node-config-input-firestore-status").prop("checked") ?? this.status?.firestore;
+          const storageStatus = $("#node-config-input-storage-status").prop("checked") ?? this.status?.storage;
+          if (firestoreStatus || storageStatus) return opt ? i18n("validators.missing-url") : false;
+        }
         if (/^$|^https:\/\/[a-zA-Z0-9-]{4,30}-default-rtdb\.((asia-southeast1|europe-west1)\.firebasedatabase\.app|firebaseio\.com)\/$/.test(value)) return true;
         return opt ? i18n("validators.invalid-url") : false;
       };
