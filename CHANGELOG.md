@@ -1,5 +1,12 @@
 # Change log
 
+## 0.2.3
+
+### Improvements
+
+- Using RTDB status must validate database URL
+- Silent error when getting RTDB Setting
+
 ## 0.2.2
 
 ### Changes
