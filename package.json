@@ -46,6 +46,7 @@
     "@firebase/auth": "1.9.0",
     "@firebase/database": "1.0.12",
     "@firebase/firestore": "4.7.8",
+    "axios": "^1.8.1",
     "firebase-admin": "^13.1.0",
     "tiny-typed-emitter": "^2.1.0"
   },

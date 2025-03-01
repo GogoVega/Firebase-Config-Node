@@ -65,20 +65,15 @@ export default async function (RED: NodeAPI) {
 		},
 	});
 
-	// Got need a dynamic import due to ESM
-	// Dynamic imports are transpiled when module is CommonJS
-	// https://github.com/microsoft/TypeScript/issues/43329
-	const got = (await new Function("return import('got')")()).got;
-
 	RED.httpAdmin.get(
 		"/firebase/config-node/rtdb/settings/:id",
 		RED.auth.needsPermission("firebase-config.write"),
-		(req, res) => getDatabaseSettings(RED, got, req, res)
+		(req, res) => getDatabaseSettings(RED, req, res)
 	);
 
 	RED.httpAdmin.post(
 		"/firebase/config-node/rtdb/settings/:id",
 		RED.auth.needsPermission("firebase-config.write"),
-		(req, res) => updateDatabaseSettings(RED, got, req, res)
+		(req, res) => updateDatabaseSettings(RED, req, res)
 	);
 }

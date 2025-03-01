@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
+import axios from "axios";
 import { Request, Response } from "express";
 import { ConfigNode } from "./types";
 import { NodeAPI } from "node-red";
 import { isFirebaseConfigNode } from "../firebase/utils";
 
-async function getDatabaseSettings(RED: NodeAPI, got: typeof import("got").got, req: Request, res: Response) {
+async function getDatabaseSettings(RED: NodeAPI, req: Request, res: Response) {
 	try {
 		const id = req.params.id;
 
@@ -46,12 +47,12 @@ async function getDatabaseSettings(RED: NodeAPI, got: typeof import("got").got, 
 		const path = encodeURI(req.body.path || "defaultWriteSizeLimit");
 		const url = `${databaseURL}.settings/${path}.json`;
 
-		const response = await got.get(url, {
+		const response = await axios.get(url, {
 			headers: { Authorization: `Bearer ${token?.access_token}` },
 			responseType: "json",
 		});
 
-		res.json({ defaultWriteSizeLimit: response.body });
+		res.json({ defaultWriteSizeLimit: response.data });
 	} catch (error) {
 		res.status(500).send({ message: String(error) });
 		RED.log.error("An error occured while getting RTDB settings: ");
@@ -59,7 +60,7 @@ async function getDatabaseSettings(RED: NodeAPI, got: typeof import("got").got, 
 	}
 }
 
-async function updateDatabaseSettings(RED: NodeAPI, got: typeof import("got").got, req: Request, res: Response) {
+async function updateDatabaseSettings(RED: NodeAPI, req: Request, res: Response) {
 	try {
 		const id = req.params.id;
 
@@ -81,9 +82,8 @@ async function updateDatabaseSettings(RED: NodeAPI, got: typeof import("got").go
 		const url = `${databaseURL}.settings/${path}.json`;
 		const writeSizeLimit = req.body.writeSizeLimit;
 
-		await got.put(url, {
+		await axios.put(url, JSON.stringify(writeSizeLimit), {
 			headers: { Authorization: `Bearer ${token?.access_token}` },
-			body: JSON.stringify(writeSizeLimit),
 			responseType: "json",
 		});
 
