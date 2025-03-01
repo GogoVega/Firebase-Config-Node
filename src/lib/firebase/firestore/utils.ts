@@ -172,12 +172,18 @@ function isAdminFirestore(firestore: AdminFirestore | Firestore): firestore is A
 	return "settings" in firestore && "databaseId" in firestore;
 }
 
-function documentFrom(firestore: AdminFirestore, config: QueryConfig): AdminDocumentReference;
-function documentFrom(firestore: Firestore, config: QueryConfig): DocumentReference;
+function documentFrom<T extends AdminDocumentReference | AdminCollectionReference = AdminDocumentReference>(
+	firestore: AdminFirestore,
+	config: QueryConfig
+): T;
+function documentFrom<T extends DocumentReference | CollectionReference = DocumentReference>(
+	firestore: Firestore,
+	config: QueryConfig
+): T;
 function documentFrom(
 	firestore: AdminFirestore | Firestore,
 	config: QueryConfig
-): AdminDocumentReference | DocumentReference {
+): AdminCollectionReference | AdminDocumentReference | CollectionReference | DocumentReference {
 	let reference;
 
 	if (config.collection) {
@@ -199,9 +205,11 @@ function documentFrom(
 				: firestore.doc(config.document);
 		}
 		return reference instanceof CollectionReference ? doc(reference, config.document) : doc(firestore, config.document);
-	} else {
-		throw new Error("DocumentPath missing for Document reference.");
 	}
+
+	if (!reference) throw new Error("Path missing to Collection/Document reference.");
+
+	return reference;
 }
 
 function queryFrom(firestore: AdminFirestore, config: QueryConfig): AdminDocumentReference | AdminQuery;

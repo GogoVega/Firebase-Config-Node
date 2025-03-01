@@ -17,12 +17,14 @@
 
 import { App } from "firebase-admin/app";
 import {
+	type CollectionReference as AdminCollectionReference,
 	getFirestore as adminGetFirestore,
 	SetOptions,
 	type Firestore as AdminDatabase,
 } from "firebase-admin/firestore";
 import { FirebaseApp } from "@firebase/app";
 import {
+	addDoc,
 	getFirestore,
 	Firestore as Database,
 	disableNetwork,
@@ -34,6 +36,7 @@ import {
 	setDoc,
 	updateDoc,
 	deleteDoc,
+	type CollectionReference,
 } from "@firebase/firestore";
 
 import { FirestoreError } from "./error";
@@ -136,7 +139,16 @@ export class Firestore {
 			case "set":
 				if (!value || typeof value !== "object") throw new TypeError("Value to write must be an object");
 				if (this.isAdmin(this._database)) {
+					if (!config.document) {
+						// Create a doc with id auto-generated and the specified value
+						return documentFrom<AdminCollectionReference>(this._database, config).add(value);
+					}
 					return documentFrom(this._database, config).set(value, options);
+				}
+
+				if (!config.document) {
+					// Create a doc with id auto-generated and the specified value
+					return addDoc(documentFrom<CollectionReference>(this._database, config), value);
 				}
 				return setDoc(documentFrom(this._database, config), value, options);
 			case "update":
