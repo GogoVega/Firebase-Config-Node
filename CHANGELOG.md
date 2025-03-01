@@ -1,5 +1,15 @@
 # Change log
 
+## 0.2.4
+
+### Enhances
+
+- Support for `addDoc` to create a doc with auto-generated id (#23)
+
+### Fixes
+
+- `got` dependency missing - replaced by `axios` (#22)
+
 ## 0.2.3
 
 ### Improvements
