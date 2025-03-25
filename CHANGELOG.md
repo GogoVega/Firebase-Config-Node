@@ -1,5 +1,11 @@
 # Change log
 
+## 0.2.5
+
+### Changes
+
+- Bump dependencies to latest
+
 ## 0.2.4
 
 ### Enhances
