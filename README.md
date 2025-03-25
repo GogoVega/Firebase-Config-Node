@@ -21,9 +21,6 @@
 </div>
 <br />
 
-> [!CAUTION]
-> **BREAKING CHANGES**: v0.2.0 - the required version of Node.js is now >=18 and the required version of Node-RED >=3
-
 ## What is it?
 
 This repo is used by the following modules:

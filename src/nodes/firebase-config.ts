@@ -19,7 +19,7 @@ import { getDatabaseSettings, updateDatabaseSettings } from "../lib/nodes/rtdb-s
 import { FirebaseClient } from "../lib/nodes/firebase-client";
 import { Config, ConfigNode } from "../lib/nodes/types";
 
-const VERSION = "0.2.4";
+const VERSION = "0.2.5";
 
 export default async function (RED: NodeAPI) {
 	/**
