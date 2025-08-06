@@ -1,5 +1,12 @@
 # Change log
 
+## 0.2.6
+
+### Changes
+
+- Bump dependencies to latest. See #26
+- Update the versioning (#27)
+
 ## 0.2.5
 
 ### Changes
