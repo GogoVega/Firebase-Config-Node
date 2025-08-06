@@ -124,6 +124,12 @@ module.exports = function (RED) {
 - [Firebase RTDB Nodes](https://github.com/GogoVega/node-red-contrib-cloud-firestore): You search for the Firebase Realtime Databases Nodes?
 - [Change Log](./CHANGELOG.md): Whats changed?
 
+## Versioning
+
+While in development, the version number of this package will remain at 0.x.y. x will be incremented for breaking changes, y for new features and patches.
+
+Once config node and libraries are stable, the version number will be updated to 1.0.0 and full SemVer rules will be applied.
+
 ## License
 
 MIT License
