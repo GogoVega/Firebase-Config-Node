@@ -24,6 +24,8 @@ async function getDatabaseSettings(RED: NodeAPI, req: Request, res: Response) {
 	try {
 		const id = req.params.id;
 
+		RED.log.debug(`[firebase-config:${id}] Get 'defaultWriteSizeLimit' setting`);
+
 		if (!id) {
 			res.status(400).send("The config-node ID is missing!");
 			return;
@@ -43,9 +45,7 @@ async function getDatabaseSettings(RED: NodeAPI, req: Request, res: Response) {
 		}
 
 		const token = await node.client.getAccessToken();
-
-		const path = encodeURI(req.body.path || "defaultWriteSizeLimit");
-		const url = `${databaseURL}.settings/${path}.json`;
+		const url = `${databaseURL}.settings/defaultWriteSizeLimit.json`;
 
 		const response = await axios.get(url, {
 			headers: { Authorization: `Bearer ${token?.access_token}` },
@@ -63,6 +63,9 @@ async function getDatabaseSettings(RED: NodeAPI, req: Request, res: Response) {
 async function updateDatabaseSettings(RED: NodeAPI, req: Request, res: Response) {
 	try {
 		const id = req.params.id;
+		const writeSizeLimit = req.body.writeSizeLimit;
+
+		RED.log.debug(`[firebase-config:${id}] Set 'defaultWriteSizeLimit' setting to ${writeSizeLimit}`);
 
 		if (!id) {
 			res.status(400).send("The config-node ID is missing!");
@@ -76,11 +79,8 @@ async function updateDatabaseSettings(RED: NodeAPI, req: Request, res: Response)
 		}
 
 		const databaseURL = node.credentials.url;
+		const url = `${databaseURL}.settings/defaultWriteSizeLimit.json`;
 		const token = await node.client.getAccessToken();
-
-		const path = encodeURI(req.body.path || "defaultWriteSizeLimit");
-		const url = `${databaseURL}.settings/${path}.json`;
-		const writeSizeLimit = req.body.writeSizeLimit;
 
 		await axios.put(url, JSON.stringify(writeSizeLimit), {
 			headers: { Authorization: `Bearer ${token?.access_token}` },
