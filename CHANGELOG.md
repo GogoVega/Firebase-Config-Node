@@ -1,5 +1,12 @@
 # Change log
 
+## 0.2.7
+
+### Fixes
+
+- Prevent a request forgery attack to RTDB settings (#30)
+- RTDB URL pattern (#31)
+
 ## 0.2.6
 
 ### Changes
