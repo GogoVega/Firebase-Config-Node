@@ -259,6 +259,7 @@ function queryFrom(
 	return query(reference, ...applyQueryConstraints(config.constraints));
 }
 
+// TODO: See the benefit of https://github.com/firebase/firebase-js-sdk/pull/8926
 class Snapshot {
 	public static from(
 		data: AdminDocumentSnapshot | AdminQuerySnapshot | DocumentSnapshot | QuerySnapshot

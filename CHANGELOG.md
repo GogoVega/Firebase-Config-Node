@@ -1,5 +1,15 @@
 # Change log
 
+## 0.3.0
+
+### Breaking Changes
+
+- Set required version of Node.js to >=20
+
+### Changes
+
+- Bump dependencies to latest.
+
 ## 0.2.7
 
 ### Fixes
