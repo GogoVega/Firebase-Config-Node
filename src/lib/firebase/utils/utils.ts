@@ -71,7 +71,7 @@ export function runUpdateDependencies(RED: NodeAPI, exec: Exec): Promise<object>
  * @param name The NR module to load
  * @throws an Error if the load fails
  */
-export function loadInternalNRModule<T extends {} = {}>(name: string): T {
+export function loadInternalNRModule<T extends object = object>(name: string): T {
 	let path = join(process.env.NODE_RED_HOME || ".", "node_modules", name);
 
 	if (!existsSync(path)) {
