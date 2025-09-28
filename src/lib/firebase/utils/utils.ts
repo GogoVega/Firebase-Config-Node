@@ -72,6 +72,9 @@ export function runUpdateDependencies(RED: NodeAPI, exec: Exec): Promise<object>
  * @throws an Error if the load fails
  */
 export function loadInternalNRModule<T extends object = object>(name: string): T {
+	if (!["@node-red/registry", "@node-red/runtime", "@node-red/util"].includes(name))
+		throw new Error("Not an internal NR module: " + name);
+
 	let path = join(process.env.NODE_RED_HOME || ".", "node_modules", name);
 
 	if (!existsSync(path)) {
@@ -89,8 +92,8 @@ export function loadInternalNRModule<T extends object = object>(name: string): T
  * @param currentVersion The version to compare
  * @returns `true` if the version is higher than the required version
  */
-export function tinySemver(requiredVersion: number[], currentVersion: string): boolean {
-	const match = /([0-9])\.([0-9]+)\.([0-9]+)/.exec(currentVersion);
+export function tinySemver(requiredVersion: [number, number, number], currentVersion: string): boolean {
+	const match = /([0-9]+)\.([0-9]+)\.([0-9]+)/.exec(currentVersion);
 
 	if (match) {
 		match.shift();
