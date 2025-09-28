@@ -1,5 +1,12 @@
 # Change log
 
+## 0.3.1
+
+### Changes
+
+- Add Config Node Checker Plugin utility functions (#36)
+- Bump dependencies to latest
+
 ## 0.3.0
 
 ### Breaking Changes
