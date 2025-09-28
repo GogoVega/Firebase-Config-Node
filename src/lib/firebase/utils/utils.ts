@@ -93,7 +93,8 @@ export function loadInternalNRModule<T extends object = object>(name: string): T
  * @returns `true` if the version is higher than the required version
  */
 export function tinySemver(requiredVersion: [number, number, number], currentVersion: string): boolean {
-	const match = /([0-9]+)\.([0-9]+)\.([0-9]+)/.exec(currentVersion);
+	// v[0-99].[0-999].[0-999] - should be consistent
+	const match = /^([0-9]{1,2})\.([0-9]{1,3})\.([0-9]{1,3})-?/.exec(currentVersion.trim());
 
 	if (match) {
 		match.shift();
