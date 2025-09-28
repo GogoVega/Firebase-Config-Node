@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2023 Gauthier Dandele
+ * Copyright 2023-2025 Gauthier Dandele
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,16 @@
  * limitations under the License.
  */
 
-export function isFirebaseConfigNode(node: unknown) {
+import { existsSync } from "node:fs";
+import { join } from "node:path";
+import { NodeAPI } from "node-red";
+
+/**
+ * Checks if the given node is the Firebase Config Node
+ * @param node The node to check
+ * @returns `true` if the node is the Firebase Config Node
+ */
+export function isFirebaseConfigNode(node: unknown): boolean {
 	return !!(
 		typeof node === "object" &&
 		node &&
@@ -26,7 +35,107 @@ export function isFirebaseConfigNode(node: unknown) {
 	);
 }
 
+/**
+ * See `@node-red/util.exec`
+ */
+export type Exec = Record<"run", (command: string, args: string[], option: object, emit: boolean) => Promise<object>>;
+
+/**
+ * Run a system command with stdout/err being emitted as notification to the Event Log panel.
+ *
+ * @param RED The NodeAPI
+ * @param exec The `@node-red/util.exec` instance (because not imported to NodeAPI)
+ * @returns A promise that resolves (rc=0) or rejects (rc!=0) when the command completes.
+ */
+export function runUpdateDependencies(RED: NodeAPI, exec: Exec): Promise<object> {
+	const isWindows = process.platform === "win32";
+	const npmCommand = isWindows ? "npm.cmd" : "npm";
+	const extraArgs = [
+		"--no-audit",
+		"--no-update-notifier",
+		"--no-fund",
+		"--save",
+		"--save-prefix=~",
+		"--omit=dev",
+		"--engine-strict",
+	];
+	const args = ["update", ...extraArgs];
+	const userDir = RED.settings.userDir || process.env.NODE_RED_HOME || ".";
+
+	return exec.run(npmCommand, args, { cwd: userDir, shell: true }, true);
+}
+
+/**
+ * Some useful methods (and not critical) are not imported to NodeAPI,
+ * so it's a workaround to get them 🤫
+ * @param name The NR module to load
+ * @throws an Error if the load fails
+ */
+export function loadInternalNRModule<T extends object = object>(name: string): T {
+	if (!["@node-red/registry", "@node-red/runtime", "@node-red/util"].includes(name))
+		throw new Error("Not an internal NR module: " + name);
+
+	let path = join(process.env.NODE_RED_HOME || ".", "node_modules", name);
+
+	if (!existsSync(path)) {
+		// Some installations like FlowFuse use this path
+		path = join(process.env.NODE_RED_HOME || ".", "..", name);
+	}
+
+	// eslint-disable-next-line @typescript-eslint/no-require-imports
+	return require(path);
+}
+
+/**
+ * Checks if the given version is higher than the required version
+ * @param requiredVersion The required version
+ * @param currentVersion The version to compare
+ * @returns `true` if the version is higher than the required version
+ */
+export function tinySemver(requiredVersion: [number, number, number], currentVersion: string): boolean {
+	// v[0-99].[0-999].[0-999] - should be consistent
+	const match = /^([0-9]{1,2})\.([0-9]{1,3})\.([0-9]{1,3})-?/.exec(currentVersion.trim());
+
+	if (match) {
+		match.shift();
+
+		const [major, minor, patch] = match.map((v) => parseInt(v, 10));
+
+		return (
+			major > requiredVersion[0] ||
+			(major === requiredVersion[0] &&
+				(minor > requiredVersion[1] || (minor === requiredVersion[1] && patch >= requiredVersion[2])))
+		);
+	}
+
+	return false;
+}
+
+/**
+ * Checks if the config node has been installed in the correct directory so that NR can load it.
+ * @param RED The NodeAPI
+ * @returns `true` if the config node is loadable
+ * @throws an Error if the `userDir` setting is unavailable
+ */
+export function isConfigNodeLoadable(RED: NodeAPI): boolean {
+	const { userDir } = RED.settings;
+
+	if (!RED.settings.available() || !userDir) {
+		throw new Error("'userDir' setting not available");
+	}
+
+	const configNodePath = join(userDir, "node_modules", "@gogovega", "firebase-config-node");
+
+	return existsSync(configNodePath);
+}
+
+/**
+ * Helper function to return a string with keys of the given enum.
+ * The form is `a, b, c`.
+ * @param obj The enum
+ */
 export function printEnumKeys(obj: object) {
+	// TODO: Handle the last ', '
 	return Object.keys(obj)
 		.filter((x) => !Number.isInteger(Number(x)))
 		.map((x) => `'${x}'`)
