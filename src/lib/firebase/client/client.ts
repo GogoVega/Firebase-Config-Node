@@ -88,6 +88,17 @@ export class Client extends TypedEmitter<ClientEvents> {
 						});
 	}
 
+	private async createUserWithEmailAndPassword(email: string, password: string): Promise<UserCredential> {
+		const user = await createUserWithEmailAndPassword(this._auth as Auth, email, password);
+
+		if (this.warn) {
+			// TODO: Mask the email?
+			this.warn(`The user "${email}" has been successfully created.`);
+		}
+
+		return user;
+	}
+
 	private deleteClient(): Promise<void> {
 		if (!this._app) throw new ClientError("'deleteClient' called before 'signIn' call");
 		if (this._app.deleted === true) throw new ClientError("Client already deleted");
@@ -121,29 +132,40 @@ export class Client extends TypedEmitter<ClientEvents> {
 		return this.wrapSignIn(async () => {
 			try {
 				// Try to sign in
-				const user = await signInWithEmailAndPassword(this._auth as Auth, email, password);
-				return user;
+				return await signInWithEmailAndPassword(this._auth as Auth, email, password);
 			} catch (error) {
-				if (error instanceof FirebaseError && error.code === "auth/wrong-password") {
+				if (!(error instanceof FirebaseError)) {
+					// Unknown error; do not handled it here
 					throw error;
 				}
 
-				if (error instanceof FirebaseError && error.code === "auth/user-not-found") {
+				if (error.code === "auth/user-not-found") {
+					// The user associated with this email has never been registered.
 					if (!createUser) {
+						// Notify the user to register the email via the node or Firebase console
 						throw new FirebaseError("auth/unknown-email", "Unknown email");
 					}
 
-					const user = await createUserWithEmailAndPassword(this._auth as Auth, email, password);
-
-					if (this.warn) {
-						this.warn(
-							`The user "${email}" has been successfully created. You can delete it in the Authenticate section if it is an error.`
-						);
+					return this.createUserWithEmailAndPassword(email, password);
+				} else if (error.code === "auth/wrong-password") {
+					// The user associated with this email has been registered but the password missmatch
+					throw error;
+				} else if (error.code === "auth/invalid-credential") {
+					// Email Enumeration Protection is enabled
+					if (createUser) {
+						try {
+							// Assume the email is not registered and the password correct
+							return await this.createUserWithEmailAndPassword(email, password);
+						} catch (_error) {
+							// Unable to determine if the email already exists or the password missmatch
+						}
 					}
 
-					return user;
+					// Notify the user to check email and password
+					throw new FirebaseError("auth/wrong-email-or-password", "Wrong email or password");
 				}
 
+				// Unknown error
 				throw error;
 			}
 		});
