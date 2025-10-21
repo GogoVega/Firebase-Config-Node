@@ -26,6 +26,8 @@ const apiKey = process.env.API_KEY;
 const url = process.env.RTDB_URL;
 const projectId = process.env.PROJECT_ID;
 
+const flow = [{ id: "database", type: "firebase-config", name: "My Database", authType: "email", createUser: true }];
+
 // TODO: Add more tests
 describe("Firebase Config Node", function () {
   before(function (done) {
@@ -36,14 +38,12 @@ describe("Firebase Config Node", function () {
     helper.stopServer(done);
   });
 
-  afterEach(async function () {
-    await helper.unload();
+  afterEach(function (done) {
+    helper.unload().then(done);
   });
 
   context("When the config-node is loaded", () => {
     it("should have config", function (done) {
-      const flow = [{ id: "database", type: "firebase-config", name: "My Database", authType: "anonymous" }];
-
       helper.load([database], flow, function () {
         try {
           const n1 = helper.getNode("database");
@@ -51,7 +51,7 @@ describe("Firebase Config Node", function () {
           n1.should.have.property("name", "My Database");
           n1.should.have.property("type", "firebase-config");
 
-          n1.config.should.have.property("authType", "anonymous");
+          n1.config.should.have.property("authType", "email");
 
           done();
         } catch (error) {
@@ -61,8 +61,6 @@ describe("Firebase Config Node", function () {
     });
 
     it("should have emitted the 'unused' warning message", function (done) {
-      const flow = [{ id: "database", type: "firebase-config", name: "My Database", authType: "anonymous" }];
-
       helper.load([database], flow, function () {
         try {
           const n1 = helper.getNode("database");
@@ -81,8 +79,6 @@ describe("Firebase Config Node", function () {
     });
 
     it("should have called login", function (done) {
-      const flow = [{ id: "database", type: "firebase-config", name: "My Database", authType: "anonymous" }];
-
       helper.load([database], flow, function () {
         try {
           const n1 = helper.getNode("database");
@@ -107,17 +103,16 @@ describe("Firebase Config Node", function () {
   });
 
   context("When the credentials is setted", () => {
-    const creds = { apiKey: apiKey, url: url };
+    const creds = { apiKey: apiKey, url: url, email: "actions@github.com", password: "awesomePassword4gh-actions" };
 
     it("should validate the API Key", function (done) {
-      const flow = [{ id: "database", type: "firebase-config", name: "My Database", authType: "anonymous" }];
-      const creds = { apiKey: apiKey };
-
-      helper.load([database], flow, { "database": creds }, function () {
+      helper.load([database], flow, { "database": { apiKey: apiKey } }, async function () {
         try {
           const n1 = helper.getNode("database");
 
           n1.addStatusListener("fake-node", "rtdb");
+
+          await n1.clientSignedIn();
 
           const logEvents = helper.log().args.filter(function (evt) {
             return evt[0].type == "firebase-config" && evt[0].level === 20;
@@ -133,13 +128,13 @@ describe("Firebase Config Node", function () {
     });
 
     it("should validate the Database URL", function (done) {
-      const flow = [{ id: "database", type: "firebase-config", name: "My Database", authType: "anonymous" }];
-
-      helper.load([database], flow, { "database": creds }, function () {
+      helper.load([database], flow, { "database": creds }, async function () {
         try {
           const n1 = helper.getNode("database");
 
           n1.addStatusListener("fake-node", "rtdb");
+
+          await n1.clientSignedIn();
 
           const logEvents = helper.log().args.filter(function (evt) {
             return evt[0].type == "firebase-config" && evt[0].level === 20;
@@ -156,20 +151,26 @@ describe("Firebase Config Node", function () {
   });
 
   context("When the database is used", () => {
-    const creds = { apiKey: apiKey, url: url, projectId: projectId };
+    const creds = { apiKey: apiKey, url: url, email: "actions@github.com", password: "awesomePassword4gh-actions" };
 
     it("should have initialised the RTDB", function (done) {
-      const flow = [{ id: "database", type: "firebase-config", name: "My Database", authType: "anonymous" }];
-
-      helper.load([database], flow, { "database": creds }, function () {
+      helper.load([database], flow, { "database": creds }, async function () {
         try {
           const n1 = helper.getNode("database");
 
           n1.addStatusListener("fake-node", "rtdb");
           n1.addStatusListener.should.have.been.called;
 
+          await n1.clientSignedIn();
+
           n1.rtdb.should.be.Object();
           n1.rtdb.should.be.instanceOf(RTDB);
+
+          const logEvents = helper.log().args.filter(function (evt) {
+            return evt[0].type == "firebase-config" && evt[0].level === 20;
+          });
+
+          logEvents.should.have.length(0);
 
           done();
         } catch (error) {
@@ -179,17 +180,23 @@ describe("Firebase Config Node", function () {
     });
 
     it("should have initialised Firestore", function (done) {
-      const flow = [{ id: "database", type: "firebase-config", name: "My Database", authType: "anonymous" }];
-
-      helper.load([database], flow, { "database": creds }, function () {
+      helper.load([database], flow, { "database": { ...creds, projectId: projectId } }, async function () {
         try {
           const n1 = helper.getNode("database");
 
           n1.addStatusListener("fake-node", "firestore");
           n1.addStatusListener.should.have.been.called;
 
+          await n1.clientSignedIn();
+
           n1.firestore.should.be.Object();
           n1.firestore.should.be.instanceOf(Firestore);
+
+          const logEvents = helper.log().args.filter(function (evt) {
+            return evt[0].type == "firebase-config" && evt[0].level === 20;
+          });
+
+          logEvents.should.have.length(0);
 
           done();
         } catch (error) {
@@ -199,19 +206,27 @@ describe("Firebase Config Node", function () {
     });
 
     it("should have initialised both RTDB and Firestore", function (done) {
-      const flow = [{ id: "database", type: "firebase-config", name: "My Database", authType: "anonymous", status: { firestore: true } }];
+      const flow = [{ id: "database", type: "firebase-config", name: "My Database", authType: "email", status: { firestore: true } }];
 
-      helper.load([database], flow, { "database": creds }, function () {
+      helper.load([database], flow, { "database": creds }, async function () {
         try {
           const n1 = helper.getNode("database");
 
           n1.addStatusListener("fake-node", "firestore");
           n1.addStatusListener.should.have.been.called;
 
+          await n1.clientSignedIn();
+
           n1.rtdb.should.be.Object();
           n1.rtdb.should.be.instanceOf(RTDB);
           n1.firestore.should.be.Object();
           n1.firestore.should.be.instanceOf(Firestore);
+
+          const logEvents = helper.log().args.filter(function (evt) {
+            return evt[0].type == "firebase-config" && evt[0].level === 20;
+          });
+
+          logEvents.should.have.length(0);
 
           done();
         } catch (error) {
@@ -221,9 +236,7 @@ describe("Firebase Config Node", function () {
     });
 
     it("should triggers the connection events", function (done) {
-      const flow = [{ id: "database", type: "firebase-config", name: "My Database", authType: "anonymous" }];
-
-      helper.load([database], flow, { "database": creds }, function () {
+      helper.load([database], flow, { "database": creds }, async function () {
         try {
           const n1 = helper.getNode("database");
 
@@ -241,6 +254,8 @@ describe("Firebase Config Node", function () {
               n1.rtdb.connectionState.should.be.equal(2);
               done();
             });
+
+          await n1.clientSignedIn();
         } catch (error) {
           done(error);
         }
@@ -252,8 +267,6 @@ describe("Firebase Config Node", function () {
     const creds = { apiKey: apiKey, url: url };
 
     it("should have emitted the 'closing' warning message", function (done) {
-      const flow = [{ id: "database", type: "firebase-config", name: "My Database", authType: "anonymous" }];
-
       helper.load([database], flow, { "database": creds }, function () {
         try {
           const n1 = helper.getNode("database");
@@ -285,8 +298,6 @@ describe("Firebase Config Node", function () {
 
   context("When the config-node is closed", function () {
     it("should signOut and delete App", function (done) {
-      const flow = [{ id: "database", type: "firebase-config", name: "My Database", authType: "anonymous" }];
-
       helper.load([database], flow, function () {
         try {
           const n1 = helper.getNode("database");
