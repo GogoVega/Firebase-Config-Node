@@ -7,14 +7,14 @@ on:
       - "v*.*.*"
 
 permissions:
+  actions: read
   contents: read
 
 jobs:
-  # TODO: Add build job to run tests
   publish-npm:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      id-token: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
@@ -38,5 +38,6 @@ jobs:
         uses: JS-DevTools/npm-publish@v4
         with:
           access: public
+          ignore-scripts: true
+          provenance: true
           tag: ${{ contains(github.ref, '-beta') && 'beta' || contains(github.ref, '-alpha') && 'alpha' || 'latest' }}
-          token: ${{ secrets.NPM_TOKEN }}
