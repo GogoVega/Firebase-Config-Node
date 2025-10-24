@@ -83,7 +83,7 @@ export class Client extends TypedEmitter<ClientEvents> {
 				? null
 				: (message) =>
 						logCallback({
-							level: "info",
+							level: "warn",
 							message: message,
 						});
 	}
