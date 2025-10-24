@@ -148,7 +148,7 @@ export class Client extends TypedEmitter<ClientEvents> {
 
 					return this.createUserWithEmailAndPassword(email, password);
 				} else if (error.code === "auth/wrong-password") {
-					// The user associated with this email has been registered but the password missmatch
+					// The user associated with this email has been registered but the password mismatch
 					throw error;
 				} else if (error.code === "auth/invalid-credential") {
 					// Email Enumeration Protection is enabled
@@ -157,7 +157,7 @@ export class Client extends TypedEmitter<ClientEvents> {
 							// Assume the email is not registered and the password correct
 							return await this.createUserWithEmailAndPassword(email, password);
 						} catch (_error) {
-							// Unable to determine if the email already exists or the password missmatch
+							// Unable to determine if the email already exists or the password mismatch
 						}
 					}
 
