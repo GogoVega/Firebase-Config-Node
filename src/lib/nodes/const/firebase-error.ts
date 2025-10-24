@@ -23,5 +23,6 @@ export const firebaseError: Record<string, string> = {
 	"auth/missing-identifier": "One or more credentials are missing",
 	"auth/network-request-failed": "No Network: Please check your network",
 	"auth/unknown-email": "Please check your email address or select 'create a new user'",
+	"auth/wrong-email-or-password": "Please check your email address and password",
 	"auth/wrong-password": "Wrong Password: Please check your password.",
 };
