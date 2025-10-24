@@ -36,6 +36,16 @@ import { AdminApp, App } from "../app";
 import { LogCallback, LogFn } from "../logger";
 
 export class Client extends TypedEmitter<ClientEvents> {
+	/**
+	 * Masks an email address, e.g. "johndoe@example.com" -> "j***@example.com"
+	 */
+	private static maskEmail(email: string): string {
+		const [local, domain] = email.split("@");
+		if (!local || !domain) return email;
+		const maskedLocal = local.length > 1 ? local[0] + "***" : "*";
+		return `${maskedLocal}@${domain}`;
+	}
+
 	private _app?: AdminApp | App;
 	private _auth?: AdminAuth | Auth;
 	private _clientInitialised: boolean = false;
@@ -92,8 +102,7 @@ export class Client extends TypedEmitter<ClientEvents> {
 		const user = await createUserWithEmailAndPassword(this._auth as Auth, email, password);
 
 		if (this.warn) {
-			// TODO: Mask the email?
-			this.warn(`The user "${email}" has been successfully created.`);
+			this.warn(`The user "${Client.maskEmail(email)}" has been successfully created.`);
 		}
 
 		return user;
