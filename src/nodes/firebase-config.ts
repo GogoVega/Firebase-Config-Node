@@ -71,7 +71,7 @@ export default async function (RED: NodeAPI) {
 		(req, res) => getDatabaseSettings(RED, req, res)
 	);
 
-	RED.httpAdmin.post(
+	RED.httpAdmin.put(
 		"/firebase/config-node/rtdb/settings/:id",
 		RED.auth.needsPermission("firebase-config.write"),
 		(req, res) => updateDatabaseSettings(RED, req, res)
