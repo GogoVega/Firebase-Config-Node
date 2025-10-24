@@ -135,7 +135,7 @@ export class Client extends TypedEmitter<ClientEvents> {
 				return await signInWithEmailAndPassword(this._auth as Auth, email, password);
 			} catch (error) {
 				if (!(error instanceof FirebaseError)) {
-					// Unknown error; do not handled it here
+					// Unknown error; do not handle it here
 					throw error;
 				}
 
