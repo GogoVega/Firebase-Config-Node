@@ -87,10 +87,10 @@ async function updateDatabaseSettings(RED: NodeAPI, req: Request, res: Response)
 			responseType: "json",
 		});
 
-		res.sendStatus(200);
+		res.sendStatus(204);
 	} catch (error) {
 		res.status(500).send({ message: String(error) });
-		RED.log.error("An error occured while setting RTDB settings: ");
+		RED.log.error("An error occurred while setting RTDB settings: ");
 		RED.log.error(error);
 	}
 }

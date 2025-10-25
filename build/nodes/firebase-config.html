@@ -115,7 +115,12 @@
 					if ($(this).attr("disabled")) return;
 					$(this).attr("disabled", true);
 
-					$.post(`firebase/config-node/rtdb/settings/${node.id}`, { writeSizeLimit: sizeLimitInput.val() })
+					$.ajax({
+						url: `firebase/config-node/rtdb/settings/${node.id}`,
+						method: "PUT",
+						contentType: "application/json",
+						data: JSON.stringify({ writeSizeLimit: sizeLimitInput.val() }),
+					})
 						.then(function () {
 							RED.notify("Successfully updated RTDB settings", "success");
 						})
