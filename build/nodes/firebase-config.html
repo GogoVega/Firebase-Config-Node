@@ -118,7 +118,8 @@
 					$.ajax({
 						url: `firebase/config-node/rtdb/settings/${node.id}`,
 						method: "PUT",
-						data: { writeSizeLimit: sizeLimitInput.val() },
+						contentType: "application/json",
+						data: JSON.stringify({ writeSizeLimit: sizeLimitInput.val() }),
 					})
 						.then(function () {
 							RED.notify("Successfully updated RTDB settings", "success");
