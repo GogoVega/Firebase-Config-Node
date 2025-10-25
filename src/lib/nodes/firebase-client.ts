@@ -480,7 +480,7 @@ export class FirebaseClient {
 		// Save the status
 		this.globalStatus = newGlobalStatus;
 
-		const nodes = this.statusListeners.rtdb;
+		const nodes = this.statusListeners.rtdb.slice();
 
 		// Add status to Firestore and Storage nodes
 		// Transmit status to all nodes if it's an error
