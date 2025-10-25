@@ -10,7 +10,8 @@
     "format": "prettier --write \"**/*.{md,ts,html}\"",
     "lint": "eslint . --ext .ts",
     "prebuild": "npm run clean",
-    "test": "mocha './test/**/*_spec.js' --exit"
+    "test": "mocha './test/**/*_spec.js' --exit",
+    "dev": "nodemon --watch src --watch build --watch resources --ext js,json,html,ts --ignore 'build/**/*.js' --ignore 'build/**/*.d.ts' --exec \"npm run build && npx node-red\""
   },
   "repository": {
     "type": "git",
