@@ -106,7 +106,6 @@
 				});
 
 				const node = this;
-				let popover = null;
 				const sizeLimitButton = $("#node-config-button-defaultWriteSizeLimit");
 				sizeLimitButton.on("click", function (event) {
 					event.preventDefault();
@@ -133,9 +132,12 @@
 						});
 				});
 
+				let popover = null;
 				const msg = "Only available with PrivateKey authentication";
+				const deployedNode = RED.nodes.node(this.id);
 				authType.on("change", function () {
-					if (authType.val() === "privateKey") {
+					if (deployedNode._config && deployedNode._config.authType === "privateKey") {
+						// Allow the action as long as the runtime-side node is running with a private key
 						sizeLimitButton.attr("disabled", false);
 						popover?.delete();
 						popover = null;
@@ -143,6 +145,14 @@
 						$.getJSON(`firebase/config-node/rtdb/settings/${node.id}`, function (response) {
 							sizeLimitInput.typedInput("value", response.defaultWriteSizeLimit || "large");
 						});
+					} else if (authType.val() === "privateKey") {
+						sizeLimitButton.attr("disabled", true);
+						const msg = "Deploy your changes first";
+						if (popover) {
+							popover.setContent(msg);
+						} else {
+							popover = RED.popover.tooltip(sizeLimitButton, msg);
+						}
 					} else if (popover) {
 						sizeLimitButton.attr("disabled", true);
 						popover.setContent(msg);
