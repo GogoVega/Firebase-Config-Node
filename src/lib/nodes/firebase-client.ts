@@ -125,18 +125,25 @@ export class FirebaseClient {
 	private destroyUnusedConnection() {
 		const { name } = this.node.config;
 		const { rtdb, firestore } = this.statusListeners;
+		const connectionStatusEnabled = this.node.config.status?.firestore === true;
+
+		this.node.debug(`destroyUnusedConnection: rtdb=${rtdb.length} and firestore=${firestore.length}`);
 
 		if (!rtdb.length && !firestore.length && !this.destroyUCMsgEmitted) {
 			this.destroyUCMsgEmitted = true;
 			this.node.warn(`WARNING: '${name}' config node is unused! All connections with Firebase will be closed...`);
 		}
 
-		if (rtdb.length === 0 && this.node.rtdb && !this.node.rtdb.offline) {
+		if (
+			rtdb.length === 0 &&
+			this.node.rtdb?.offline === false &&
+			(!connectionStatusEnabled || (connectionStatusEnabled && firestore.length === 0))
+		) {
 			this.node.rtdb.goOffline();
 			this.node.log("Connection with Firebase RTDB was closed because no node used.");
 		}
 
-		if (firestore.length === 0 && this.node.firestore && !this.node.firestore.offline) {
+		if (firestore.length === 0 && this.node.firestore?.offline === false) {
 			this.node.firestore.goOffline();
 			this.node.log("Connection with Firestore was closed because no node used.");
 		}
@@ -238,15 +245,13 @@ export class FirebaseClient {
 	}
 
 	private initDatabase(type: ServiceType) {
-		// Init RTDB for connection status if no Firebase node used
-		if (this.node.config.status?.firestore && !this.statusListeners.rtdb.length) {
-			this.statusListeners.rtdb.push("fake-node-for-status");
-			this.initRTDB();
-		}
-
 		if (type === "firestore") {
 			this.initFirestore();
-		} else if (type === "rtdb") {
+		}
+
+		// Init RTDB if connection status is enabled
+		// If this method is called, it means that at least one node exists.
+		if (type === "rtdb" || this.node.config.status?.firestore) {
 			this.initRTDB();
 		}
 	}
@@ -256,8 +261,11 @@ export class FirebaseClient {
 		if (this.node.firestore) return;
 		// Skip if the client is not initialised
 		if (!this.node.client?.clientInitialised) return;
+		// Skip if the database has failed to init
+		if (this.statusListeners.firestore.length > 1) return;
 
 		// TODO: Add log
+		this.node.debug("Init Firestore database...");
 		this.node.firestore = new Firestore(this.node.client);
 	}
 
@@ -266,9 +274,11 @@ export class FirebaseClient {
 		if (this.node.rtdb) return;
 		// Skip if the client is not initialised
 		if (!this.node.client?.clientInitialised) return;
+		// Skip if the database has failed to init
 		if (this.statusListeners.rtdb.length > 1) return;
 
 		try {
+			this.node.debug("Init RTDB database...");
 			this.node.rtdb = new RTDB(this.node.client);
 			this.node.rtdb.onLog(({ level, message }) => this.node[level === "info" ? "log" : level](message));
 			this.node.rtdb.onStatusUpdate((status) => this.updateGlobalStatus(status));
@@ -428,8 +438,14 @@ export class FirebaseClient {
 	 */
 	private restoreDestroyedConnection() {
 		this.destroyUCMsgEmitted = false;
-		if (this.node.rtdb?.offline && this.statusListeners.rtdb) this.node.rtdb.goOnline();
-		if (this.node.firestore?.offline && this.statusListeners.firestore) this.node.firestore.goOnline();
+		if (this.node.rtdb?.offline && this.statusListeners.rtdb.length) {
+			this.node.debug("Restore destroyed connection with RTDB");
+			this.node.rtdb.goOnline();
+		}
+		if (this.node.firestore?.offline && this.statusListeners.firestore.length) {
+			this.node.debug("Restore destroyed connection with Firestore");
+			this.node.firestore.goOnline();
+		}
 	}
 
 	private setCurrentStatus(nodeOrId: Node | string) {
