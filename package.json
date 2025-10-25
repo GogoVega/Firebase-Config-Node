@@ -11,7 +11,7 @@
     "lint": "eslint . --ext .ts",
     "prebuild": "npm run clean",
     "test": "mocha './test/**/*_spec.js' --exit",
-    "dev": "nodemon --watch src --watch build --watch resources --ext js,json,html,ts --ignore 'build/**/*.js' --ignore 'build/**/*.d.ts' --exec \"npm run build && npx node-red\""
+    "dev": "nodemon -w src -w build -w resources -e js,json,html,ts -i 'build/**/*.js' -i 'build/**/*.d.ts' -x 'npm run build && npx node-red'"
   },
   "repository": {
     "type": "git",
@@ -59,6 +59,7 @@
     "mocha": "^10.8.2",
     "node-red": "^4.1.0",
     "node-red-node-test-helper": "^0.3.5",
+    "nodemon": "^3.1.10",
     "prettier": "^3.6.2",
     "rimraf": "^6.0.1",
     "typescript": "^5.9.2"
