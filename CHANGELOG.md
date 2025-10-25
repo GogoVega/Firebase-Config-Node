@@ -1,5 +1,22 @@
 # Change log
 
+## 0.3.2
+
+### Changes
+
+- Change the method from POST to PUT for `rtdb-settings` (#43)
+- Bump dependencies to latest (#47)
+
+### Fixes
+
+- Fix and improve the logic of destroying/restoring unused dbs (#46)
+
+### Improves
+
+- Improve error handling when logging in via email (#41)
+- Mask the email address printed in console (#42)
+- Allow to set `defaultWriteSizeLimit` as long as the runtime-side node allows it (#44)
+
 ## 0.3.1
 
 ### Changes
