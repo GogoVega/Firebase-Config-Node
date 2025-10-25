@@ -438,7 +438,8 @@ export class FirebaseClient {
 	 */
 	private restoreDestroyedConnection() {
 		this.destroyUCMsgEmitted = false;
-		if (this.node.rtdb?.offline && this.statusListeners.rtdb.length) {
+		// If this method is called, it means that at least one node exists.
+		if (this.node.rtdb?.offline && (this.statusListeners.rtdb.length || this.node.config.status?.firestore)) {
 			this.node.debug("Restore destroyed connection with RTDB");
 			this.node.rtdb.goOnline();
 		}
