@@ -1,6 +1,6 @@
 {
   "name": "@gogovega/firebase-config-node",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "Node-RED config node to communicate with Google Firebase",
   "main": "build/index.js",
   "types": "build/index.d.ts",
