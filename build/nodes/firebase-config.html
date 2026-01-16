@@ -132,19 +132,23 @@
 						});
 				});
 
+				let isPrivateKeyAuthUsed = false;
+				$.getJSON(`firebase/config-node/rtdb/settings/${this.id}`, function (response) {
+					if (response.defaultWriteSizeLimit) {
+						// Assume the runtime uses PrivateKey authentication to obtain a non-empty value
+						isPrivateKeyAuthUsed = true;
+					}
+					sizeLimitInput.typedInput("value", response.defaultWriteSizeLimit || "large");
+					authType.trigger("change");
+				});
+
 				let popover = null;
 				const msg = "Only available with PrivateKey authentication";
-				const deployedNode = RED.nodes.node(this.id) || this;
 				authType.on("change", function () {
-					if (deployedNode._config && deployedNode._config.authType === "privateKey") {
-						// Allow the action as long as the runtime-side node is running with a private key
+					if (isPrivateKeyAuthUsed) {
 						sizeLimitButton.attr("disabled", false);
 						popover?.delete();
 						popover = null;
-
-						$.getJSON(`firebase/config-node/rtdb/settings/${node.id}`, function (response) {
-							sizeLimitInput.typedInput("value", response.defaultWriteSizeLimit || "large");
-						});
 					} else if (authType.val() === "privateKey") {
 						sizeLimitButton.attr("disabled", true);
 						const msg = "Deploy your changes first";
