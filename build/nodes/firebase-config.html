@@ -134,7 +134,7 @@
 
 				let popover = null;
 				const msg = "Only available with PrivateKey authentication";
-				const deployedNode = RED.nodes.node(this.id);
+				const deployedNode = RED.nodes.node(this.id) || this;
 				authType.on("change", function () {
 					if (deployedNode._config && deployedNode._config.authType === "privateKey") {
 						// Allow the action as long as the runtime-side node is running with a private key
