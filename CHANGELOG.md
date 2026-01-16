@@ -1,5 +1,19 @@
 # Change log
 
+## 0.3.3
+
+### Changes
+
+- Bump dependencies to latest (#47)
+
+### Fixes
+
+- `defaultWriteSizeLimit` with new config node (#49)
+
+### Improves
+
+- The logic around `defaultWriteSizeLimit` (#51)
+
 ## 0.3.2
 
 ### Changes
