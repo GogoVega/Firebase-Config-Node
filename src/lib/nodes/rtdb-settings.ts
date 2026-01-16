@@ -22,7 +22,8 @@ import { isFirebaseConfigNode } from "../firebase/utils";
 
 async function getDatabaseSettings(RED: NodeAPI, req: Request, res: Response) {
 	try {
-		const id = req.params.id;
+		// Because of Express wildcard
+		const id = req.params.id as string;
 
 		RED.log.debug(`[firebase-config:${id}] Get 'defaultWriteSizeLimit' setting`);
 
@@ -62,7 +63,8 @@ async function getDatabaseSettings(RED: NodeAPI, req: Request, res: Response) {
 
 async function updateDatabaseSettings(RED: NodeAPI, req: Request, res: Response) {
 	try {
-		const id = req.params.id;
+		// Because of Express wildcard
+		const id = req.params.id as string;
 		const writeSizeLimit = req.body.writeSizeLimit;
 
 		RED.log.debug(`[firebase-config:${id}] Set 'defaultWriteSizeLimit' setting to ${writeSizeLimit}`);
