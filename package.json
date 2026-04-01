@@ -9,6 +9,7 @@
     "clean": "rimraf build/lib build/{**/,}*.{js,d.ts}",
     "format": "prettier --write \"**/*.{md,ts,html}\"",
     "lint": "eslint . --ext .ts",
+    "postinstall": "node scripts/axios-check.js",
     "prebuild": "npm run clean",
     "test": "mocha './test/**/*_spec.js' --exit",
     "dev": "nodemon -w src -w build -w resources -e js,json,html,ts -i 'build/**/*.js' -i 'build/**/*.d.ts' -x 'npm run build && npx node-red'"
@@ -70,6 +71,7 @@
   "files": [
     "build/",
     "resources/",
+    "scripts/axios-check.js",
     "CHANGELOG.md",
     "LICENSE",
     "README.md",
