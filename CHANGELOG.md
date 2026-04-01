@@ -1,5 +1,12 @@
 # Change log
 
+## 0.3.4
+
+### Changes
+
+- Bump dependencies to latest
+- Add post-installation script to detect Axios npm Supply Chain Attack
+
 ## 0.3.3
 
 ### Changes

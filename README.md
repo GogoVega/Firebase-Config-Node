@@ -21,6 +21,9 @@
 </div>
 <br />
 
+> [!CAUTION]
+> A post-installation script has been added to detect Axios npm Supply Chain Attack. See https://github.com/theNetworkChuck/axios-attack-guide.
+
 ## What is it?
 
 This repo is used by the following modules:
