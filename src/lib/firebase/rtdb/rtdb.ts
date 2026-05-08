@@ -218,9 +218,7 @@ export class RTDB extends RTDBConnection {
 		this.subscribeConnectionState();
 	}
 
-	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-	// @ts-ignore
-	private isAdmin(db: AdminDatabase | Database): db is AdminDatabase {
+	private isAdmin(_db: AdminDatabase | Database): _db is AdminDatabase {
 		if (this.client.admin === undefined) throw new RTDBError("Property 'admin' missing in App class");
 		return this.client.admin;
 	}
