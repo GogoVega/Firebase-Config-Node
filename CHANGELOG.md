@@ -1,5 +1,13 @@
 # Change log
 
+## 0.3.5
+
+### Changes
+
+- Bump dependencies to latest
+  - firebase from `12.11.0` to `12.13.0`
+  - firebase-admin from `13.7.0` to `13.9.0`
+
 ## 0.3.4
 
 ### Changes

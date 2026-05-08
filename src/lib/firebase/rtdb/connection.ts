@@ -43,9 +43,7 @@ export class RTDBConnection extends Connection {
 		return this._database;
 	}
 
-	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-	// @ts-ignore
-	private isAdminApp(app: App | FirebaseApp): app is App {
+	private isAdminApp(_app: App | FirebaseApp): _app is App {
 		if (this.client.admin === undefined) throw new RTDBError("Property 'admin' missing in App class");
 		return this.client.admin;
 	}

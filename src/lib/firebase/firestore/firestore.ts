@@ -77,16 +77,12 @@ export class Firestore {
 			: getFirestore(this.client.app);
 	}
 
-	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-	// @ts-ignore
-	private isAdmin(db: AdminDatabase | Database): db is AdminDatabase {
+	private isAdmin(_db: AdminDatabase | Database): _db is AdminDatabase {
 		if (this.client.admin === undefined) throw new FirestoreError("Property 'admin' missing in App class");
 		return this.client.admin;
 	}
 
-	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-	// @ts-ignore
-	private isAdminApp(app: App | FirebaseApp): app is App {
+	private isAdminApp(_app: App | FirebaseApp): _app is App {
 		if (this.client.admin === undefined) throw new FirestoreError("Property 'admin' missing in App class");
 		return this.client.admin;
 	}
