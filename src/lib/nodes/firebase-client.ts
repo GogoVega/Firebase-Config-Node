@@ -376,6 +376,7 @@ export class FirebaseClient {
 
 				if (!this.node.client.admin && this.node.firestore) {
 					// https://github.com/firebase/firebase-js-sdk/issues/7816
+					// https://github.com/firebase/firebase-admin-node/issues/2825
 					// TODO: The promise is not resolved due to a bug in Node.
 					// Workaround for now to not wait for it anymore.
 					this.node.client.signOut();
