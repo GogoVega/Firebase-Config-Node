@@ -1,5 +1,17 @@
 # Change log
 
+## 0.4.0
+
+### Breaking Changes
+
+- Set required version of Node.js to >=22
+
+### Changes
+
+- Bump dependencies to latest
+  - firebase from `12.13.0` to `12.18.0`
+  - firebase-admin from `13.9.0` to `14.3.0`
+
 ## 0.3.5
 
 ### Changes
